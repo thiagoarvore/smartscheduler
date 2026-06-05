@@ -20,6 +20,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 ENVIRONMENT = os.getenv("ENVIRONMENT", config("ENVIRONMENT", default="local")).strip()
 DEVELOPMENT_ENVIRONMENTS = {"local", "dev"}
 
+
+def env_bool(name: str, default: bool) -> bool:
+    raw_value = os.getenv(name)
+    if raw_value is None:
+        return default
+    return raw_value.strip().lower() in {"1", "true", "yes", "on"}
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config(
     "SECRET_KEY",
@@ -35,7 +42,7 @@ else:
 
 ALLOWED_HOSTS = config(
     "ALLOWED_HOSTS",
-    default="localhost,127.0.0.1",
+    default="localhost,127.0.0.1,.localhost",
 ).split(",")
 
 # Application definition
@@ -124,6 +131,17 @@ DATABASE_ROUTERS = (
 
 TENANT_MODEL = "tenants.Tenant"
 TENANT_DOMAIN_MODEL = "tenants.Domain"
+
+DEMO_TENANT_ENABLED = env_bool(
+    "DEMO_TENANT_ENABLED",
+    default=ENVIRONMENT in DEVELOPMENT_ENVIRONMENTS,
+)
+DEMO_TENANT_NAME = config("DEMO_TENANT_NAME", default="Colegio Objetivo")
+DEMO_TENANT_SCHEMA_NAME = config(
+    "DEMO_TENANT_SCHEMA_NAME",
+    default="colegioobjetivo",
+)
+DEMO_TENANT_DOMAIN = config("DEMO_TENANT_DOMAIN", default="localhost")
 
 TENANT_APPS_DIR = BASE_DIR / "apps"
 
