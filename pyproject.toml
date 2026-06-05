@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Grade Certa — SaaS multi-tenant para criacao, validacao e otimizacao de grades horarias escolares"
 authors = ["Thiago Azevedo <thiagoarvore@gmail.com>"]
 readme = "README.md"
-packages = [{include = "smartschedule"}]
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.13"
