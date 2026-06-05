@@ -7,7 +7,7 @@
 
 ## 1. Sprint Goal
 
-Entregar a fundação operacional do Grade Certa com Django, PostgreSQL, Docker, Poetry, Ruff e `django-tenants`, além do módulo inicial de acesso.
+Entregar a fundação operacional do Grade Certa com Django, PostgreSQL, Docker, Poetry, Ruff e `django-tenants`, além de uma landing page pública para aquisição e do módulo inicial de acesso.
 
 ## 1.1 Imagens Docker base
 
@@ -35,7 +35,8 @@ Entregar a fundação operacional do Grade Certa com Django, PostgreSQL, Docker,
 - separar `SHARED_APPS` e `TENANT_APPS`;
 - criar modelagem inicial de tenant e domínio;
 - resolver tenant por domínio;
-- preparar migrações para schema público e schemas de tenant.
+- preparar migrações para schema público e schemas de tenant;
+- criar um signal de `post_migrate` para garantir o tenant de teste `colegioobjetivo`.
 
 ### Acesso
 
@@ -45,6 +46,12 @@ Entregar a fundação operacional do Grade Certa com Django, PostgreSQL, Docker,
 - papéis e permissões iniciais;
 - vínculo de usuário com tenant/escopo;
 - estrutura mínima de autorização por unidade e nível, ainda que simples.
+
+### Landing page comercial
+
+- criar uma landing page pública para escolas conhecerem o Grade Certa;
+- apresentar proposta de valor, diferenciais e CTA de contratação;
+- deixar a página pronta antes do motor completo de grade entrar em produção.
 
 ### Fundação técnica
 
@@ -60,6 +67,7 @@ Entregar a fundação operacional do Grade Certa com Django, PostgreSQL, Docker,
 - projeto sobe localmente via Docker;
 - banco PostgreSQL funcionando;
 - tenant criado e resolvido por domínio;
+- landing page pública disponível para escolas;
 - autenticação inicial operacional;
 - estrutura base dos apps pronta;
 - lint e testes básicos passando.
@@ -72,11 +80,13 @@ Entregar a fundação operacional do Grade Certa com Django, PostgreSQL, Docker,
 4. Configurar autenticação por e-mail, usuários e permissões mínimas.
 5. Adotar Poetry e Ruff no fluxo de desenvolvimento.
 6. Garantir que o ambiente Docker suba de forma reproduzível.
+7. Publicar a landing page comercial e o bootstrap automático do tenant de teste.
 
 ## 6. Critérios de aceite
 
 - `docker compose up` sobe a stack sem intervenção manual extra.
 - O tenant é identificado corretamente pelo host/domínio.
+- A landing page pública apresenta o Grade Certa para novas escolas.
 - Um usuário consegue autenticar por e-mail e ser associado ao escopo esperado.
 - O `AUTH_USER_MODEL` customizado está configurado para o projeto.
 - `ruff check` e a suíte inicial de testes executam sem erro.

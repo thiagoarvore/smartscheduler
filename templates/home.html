@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Grade Certa — Dashboard{% endblock %}
+
+{% block body %}
+<nav class="navbar">
+    <a href="{% url 'landing' %}" class="navbar__brand">
+        <span class="navbar__mark">GC</span>
+        Grade <span style="color: var(--color-primary);">Certa</span>
+    </a>
+    <div class="navbar__actions">
+        <span class="text-muted">{{ user.first_name|default:user.email }}</span>
+        <a href="{% url 'logout' %}" class="btn btn--ghost btn--sm">Sair</a>
+    </div>
+</nav>
+
+<main class="page-content">
+    <div class="container">
+        <div class="card">
+            <div class="card__header">
+                <h2 class="card__title">Bem-vindo, {{ user.first_name|default:user.email }}!</h2>
+            </div>
+            <p class="text-muted">
+                O tenant de teste está disponível para validar a base da operação e continuar a evolução do Grade Certa.
+            </p>
+        </div>
+    </div>
+</main>
+{% endblock %}

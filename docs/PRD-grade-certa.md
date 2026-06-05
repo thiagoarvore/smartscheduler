@@ -1,7 +1,7 @@
 # Grade Certa — PRD (Product Requirements Document)
 
 > **Status:** rascunho revisado de produto  
-> **Versão:** 0.4  
+> **Versão:** 0.5  
 > **Fonte principal:** `/opt/data/SmartSchedule/docs/modelagem-entidades-grade-certa.md`  
 > **Contexto complementar:** `/opt/data/SmartSchedule/docs/regras-negocio.md`  
 > **Escopo deste documento:** produto, regras de negócio, experiência esperada e critérios de valor.  
@@ -168,14 +168,16 @@ Responsabilidades:
 
 ### 7.1 Gestão de tenant e escola
 
-O produto deve permitir que o administrador da plataforma crie um tenant para uma escola ou rede.
+O produto deve permitir que o administrador da plataforma crie um tenant para uma escola ou rede, e que a escola encontre uma landing page pública pronta para conhecer, avaliar e contratar o serviço antes da operação completa estar disponível.
 
 Requisitos:
 
 - criar tenant com nome da escola/rede;
+- criar landing page pública para apresentação e contratação do serviço;
 - criar superusuário inicial com email, nome e sobrenome;
 - associar todos os cadastros posteriores ao tenant;
-- impedir acesso entre tenants.
+- impedir acesso entre tenants;
+- criar automaticamente um tenant de teste chamado `colegioobjetivo` no pós-migrate, caso ele ainda não exista.
 
 ### 7.2 Gestão de usuários e permissões
 
