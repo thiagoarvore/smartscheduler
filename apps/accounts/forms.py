@@ -1,9 +1,7 @@
 """Forms for managing user accounts."""
 
-from django.contrib.auth.forms import (
-    AuthenticationForm,
-    UserCreationForm,
-)
+from django import forms
+from django.contrib.auth.forms import UserCreationForm
 from django.utils.translation import gettext_lazy as _
 
 from .models import User
@@ -24,10 +22,8 @@ class SignUpForm(UserCreationForm):
         self.fields["password2"].label = _("Confirmacao de senha")
 
 
-class UserLoginForm(AuthenticationForm):
+class UserLoginForm(forms.Form):
     """Form for user authentication via email."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["username"].label = _("E-mail")
-        self.fields["password"].label = _("Senha")
+    email = forms.EmailField(label=_("E-mail"))
+    password = forms.CharField(label=_("Senha"), strip=False, widget=forms.PasswordInput)

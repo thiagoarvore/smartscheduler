@@ -1,0 +1,51 @@
+from django.urls import path
+
+from .views import (
+    ClassGroupCreateView,
+    ClassGroupDeleteView,
+    ClassGroupListView,
+    ClassGroupUpdateView,
+    PeriodCreateView,
+    PeriodDeleteView,
+    PeriodListView,
+    PeriodUpdateView,
+    SchoolsIndexView,
+    SeriesCreateView,
+    SeriesDeleteView,
+    SeriesListView,
+    SeriesUpdateView,
+    TeachingLevelCreateView,
+    TeachingLevelDeleteView,
+    TeachingLevelListView,
+    TeachingLevelUpdateView,
+    UnitCreateView,
+    UnitDeleteView,
+    UnitListView,
+    UnitUpdateView,
+)
+
+app_name = "schools"
+
+urlpatterns = [
+    path("", SchoolsIndexView.as_view(), name="index"),
+    path("unidades/", UnitListView.as_view(), name="unit-list"),
+    path("unidades/nova/", UnitCreateView.as_view(), name="unit-create"),
+    path("unidades/<uuid:pk>/editar/", UnitUpdateView.as_view(), name="unit-update"),
+    path("unidades/<uuid:pk>/excluir/", UnitDeleteView.as_view(), name="unit-delete"),
+    path("niveis/", TeachingLevelListView.as_view(), name="teachinglevel-list"),
+    path("niveis/novo/", TeachingLevelCreateView.as_view(), name="teachinglevel-create"),
+    path("niveis/<uuid:pk>/editar/", TeachingLevelUpdateView.as_view(), name="teachinglevel-update"),
+    path("niveis/<uuid:pk>/excluir/", TeachingLevelDeleteView.as_view(), name="teachinglevel-delete"),
+    path("periodos/", PeriodListView.as_view(), name="period-list"),
+    path("periodos/novo/", PeriodCreateView.as_view(), name="period-create"),
+    path("periodos/<uuid:pk>/editar/", PeriodUpdateView.as_view(), name="period-update"),
+    path("periodos/<uuid:pk>/excluir/", PeriodDeleteView.as_view(), name="period-delete"),
+    path("series/", SeriesListView.as_view(), name="series-list"),
+    path("series/novo/", SeriesCreateView.as_view(), name="series-create"),
+    path("series/<uuid:pk>/editar/", SeriesUpdateView.as_view(), name="series-update"),
+    path("series/<uuid:pk>/excluir/", SeriesDeleteView.as_view(), name="series-delete"),
+    path("turmas/", ClassGroupListView.as_view(), name="classgroup-list"),
+    path("turmas/nova/", ClassGroupCreateView.as_view(), name="classgroup-create"),
+    path("turmas/<uuid:pk>/editar/", ClassGroupUpdateView.as_view(), name="classgroup-update"),
+    path("turmas/<uuid:pk>/excluir/", ClassGroupDeleteView.as_view(), name="classgroup-delete"),
+]

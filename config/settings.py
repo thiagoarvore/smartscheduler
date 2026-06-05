@@ -70,6 +70,8 @@ TENANT_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "apps.schools.apps.SchoolsConfig",
+    "apps.curriculum.apps.CurriculumConfig",
 ]
 
 INSTALLED_APPS = list(SHARED_APPS) + [
