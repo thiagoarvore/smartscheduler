@@ -83,6 +83,7 @@ class TestBootstrapDemoTenantCommand:
                 "name": "Colegio Objetivo",
                 "paid_until": None,
                 "on_trial": True,
+                "auto_create_schema": True,
             },
         )
         domain_get_or_create.assert_called_once_with(

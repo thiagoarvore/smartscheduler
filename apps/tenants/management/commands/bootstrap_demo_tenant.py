@@ -24,6 +24,7 @@ class Command(BaseCommand):
                     "name": tenant_name,
                     "paid_until": None,
                     "on_trial": True,
+                    "auto_create_schema": True,
                 },
             )
 
