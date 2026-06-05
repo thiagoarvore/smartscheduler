@@ -54,6 +54,9 @@ cp .env.example .env
 docker compose up --build
 ```
 
+- O bootstrap do tenant demo roda por padrao em ambiente local.
+- Para desabilitar em producao, defina `DEMO_TENANT_ENABLED=False`.
+
 ### Para testes locais (SQLite)
 
 ```bash
