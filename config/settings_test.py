@@ -26,4 +26,4 @@ DATABASE_ROUTERS = ()
 INSTALLED_APPS = [app for app in INSTALLED_APPS if app != "django_tenants"]  # noqa: F405
 
 # Remove TenantMiddleware for SQLite tests
-MIDDLEWARE = [m for m in MIDDLEWARE if m != "django_tenants.middleware.default.TenantMiddleware"]  # noqa: F405
+MIDDLEWARE = [m for m in MIDDLEWARE if m != "django_tenants.middleware.default.DefaultTenantMiddleware"]  # noqa: F405
