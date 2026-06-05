@@ -1,7 +1,7 @@
 # Grade Certa — SDD de Arquitetura do Sistema
 
 > **Status:** rascunho de arquitetura  
-> **Versão:** 0.2  
+> **Versão:** 0.3  
 > **Base conceitual:** `/opt/data/SmartSchedule/docs/modelagem-entidades-grade-certa.md`, PRD/SDD do Grade Certa e padrão de implementação do Thinkflow  
 > **Escopo deste documento:** arquitetura do sistema, stack, organização do código, containers, camadas DDD, estratégia de testes e front-end server-side.  
 > **Fora de escopo neste momento:** estilo visual, identidade visual, design system, branding e detalhamento de UI final.
@@ -411,7 +411,28 @@ Responsável por:
 - O ORM não deve receber regra de negócio que pertença ao domínio puro.
 - Querysets complexos devem ficar encapsulados em repositórios, managers especializados ou services de leitura.
 
-### 8.3 Migrações
+### 8.3 BaseModel e herança
+
+Todos os models de domínio do Grade Certa que não herdam de mixins específicos (`TenantMixin`, `DomainMixin`) devem herdar de `BaseModel` do `django-base-kit`.
+
+O `BaseModel` fornece:
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `id` | UUID | Chave primária, gerada automaticamente |
+| `created_at` | DateTime | Timestamp de criação (auto_now_add) |
+| `updated_at` | DateTime | Timestamp de atualização (auto_now) |
+| `active` | Boolean | Ativação/desativação lógica (default=True) |
+| `changelog` | AuditlogHistoryField | Auditoria automática de mudanças |
+
+Isso elimina a necessidade de declarar manualmente `id`, `created_at`, `updated_at`, `active` e `changelog` em cada model. Modelos que usam `BaseModel` não devem declarar esses campos novamente.
+
+Exceções:
+
+- `Tenant` e `Domain` herdam de `TenantMixin`/`DomainMixin` do `django-tenants` e não usam `BaseModel`.
+- O model `User` herda de `BaseModel` + `AbstractUser` (via herança combinada) e customiza `USERNAME_FIELD` e reverse accessors.
+
+### 8.4 Migrações
 
 - Toda alteração estrutural deve passar por migração Django.
 - O projeto deve tratar migrações como parte da disciplina arquitetural, não como detalhe secundário.
@@ -471,7 +492,21 @@ O projeto deve usar o `django-base-kit` como base padrão quando fizer sentido p
 - sobrescrever o que for necessário para o domínio do Grade Certa;
 - não depender da base como se ela fosse o produto final.
 
-### 10.2 Expectativa arquitetural
+### 10.2 BaseModel do django-base-kit
+
+O `django-base-kit` fornece um `BaseModel` abstrato que deve ser herdado por todos os models de domínio do Grade Certa que precisem de:
+
+- `id` — UUID como chave primária;
+- `created_at` — timestamp de criação (auto_now_add);
+- `updated_at` — timestamp de atualização (auto_now);
+- `active` — booleano para ativação/desativação lógica (default=True);
+- `changelog` — campo de auditoria do `django-auditlog` (AuditlogHistoryField).
+
+Modelos que já herdam de mixins específicos (como `TenantMixin` e `DomainMixin` do `django-tenants`) não precisam herdar de `BaseModel`, pois esses mixins já gerenciam o ciclo de vida do tenant. No entanto, todos os models de domínio próprios do Grade Certa (unidade, nível, período, série, turma, disciplina, professor, grade, slot, etc.) devem herdar de `BaseModel`.
+
+Para o model `User`, o `django-base-kit` fornece `User(BaseModel, AbstractUser)` com `email` único. O Grade Certa deve herdar desse User ou herdar diretamente de `BaseModel` + `AbstractUser` quando precisarcustomizar `USERNAME_FIELD` e reverse accessors.
+
+### 10.3 Expectativa arquitetural
 
 A base deve servir como fundação, mas a arquitetura final do Grade Certa deve ser própria e orientada ao domínio do scheduling escolar.
 

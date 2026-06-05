@@ -1,7 +1,7 @@
 # Grade Certa — SDD Conceitual (System/Domain Design Document)
 
 > **Status:** rascunho revisado de modelagem de domínio  
-> **Versão:** 0.4  
+> **Versão:** 0.5  
 > **Fonte principal:** `/opt/data/SmartSchedule/docs/modelagem-entidades-grade-certa.md`  
 > **Contexto complementar:** `/opt/data/SmartSchedule/docs/regras-negocio.md`  
 > **Escopo deste documento:** desenho conceitual do sistema, entidades de domínio, relações, regras, fluxos e estados.  
@@ -35,6 +35,10 @@ Regra geral:
 ```text
 Toda entidade relevante do domínio deve ter um id UUID.
 ```
+
+Implementação: no código, todos os models de domínio que não herdam de mixins específicos (`TenantMixin`, `DomainMixin`) devem herdar de `BaseModel` do `django-base-kit`, que já fornece `id` UUID, `created_at`, `updated_at`, `active` e `changelog` (AuditlogHistoryField). Isso significa que as entidades conceituais listadas abaixo, quando implementadas como models Django, herdam automaticamente esses campos — não é necessário declará-los novamente.
+
+Os campos `active`, `created_at`, `updated_at` e `changelog` são fornecidos pelo `BaseModel` e não precisam ser listados explicitamente nos atributos conceituais abaixo, mas estão sempre presentes na implementação.
 
 Entidades conceituais com UUID:
 

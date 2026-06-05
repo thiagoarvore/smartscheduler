@@ -70,3 +70,27 @@ class TestUserModel:
         )
         assert admin.is_staff is True
         assert admin.is_superuser is True
+
+    def test_user_inherits_base_model_fields(self):
+        """User should inherit created_at, updated_at, changelog from BaseModel."""
+        user = User.objects.create_user(
+            username="testuser",
+            email="basemodel@gradecerta.com",
+            password="testpass12345",
+        )
+        assert user.created_at is not None
+        assert user.updated_at is not None
+        assert hasattr(user, "changelog")
+
+    def test_user_inherits_active_toggle(self):
+        """User.active should be toggleable via BaseModel's active field."""
+        user = User.objects.create_user(
+            username="testuser",
+            email="toggle@gradecerta.com",
+            password="testpass12345",
+        )
+        assert user.active is True
+        user.active = False
+        user.save()
+        user.refresh_from_db()
+        assert user.active is False
