@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grade Certa — Exploração de Identidade Visual</title>
+  <style>
+    body { margin:0; font-family: Inter, system-ui, sans-serif; background:#0b1020; color:#eef3ff; }
+    .wrap { width:min(100% - 32px, 1100px); margin:0 auto; padding:48px 0 64px; }
+    h1 { font-size: clamp(2rem, 4vw, 3.6rem); margin:0 0 12px; letter-spacing:-.05em; }
+    p { color: rgba(238,243,255,.72); line-height:1.7; max-width: 68ch; }
+    .grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; margin-top:28px; }
+    .card { background: rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); border-radius:20px; padding:20px; }
+    .card h2 { margin:0 0 10px; font-size:1.15rem; }
+    .card a { display:inline-flex; margin-top:14px; padding:10px 14px; border-radius:999px; background:#fff; color:#0b1020; font-weight:700; text-decoration:none; }
+    .meta { margin-top:18px; font-size:.95rem; color: rgba(238,243,255,.62); }
+    @media (max-width: 900px) { .grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Exploração de identidade visual</h1>
+    <p>
+      Três direções para o Grade Certa, cada uma com personalidade própria. Use esta página como ponto de partida para abrir as variações e comparar o tom visual.
+    </p>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Base de identidade visual</h2>
+        <p>Arquivo base com a direção institucional clean e Select2 já estilizado para o projeto.</p>
+        <a href="base/index.html">Abrir base</a>
+      </div>
+      <div class="card">
+        <h2>Opção 1 — Institucional clean</h2>
+        <p>Base clara, azul/verde de confiança, cara de produto estável e acessível.</p>
+        <a href="01-institucional-clean.html">Abrir opção 1</a>
+      </div>
+      <div class="card">
+        <h2>Opção 2 — Ops dark</h2>
+        <p>Camada escura, contraste alto e sensação de SaaS premium para a operação escolar.</p>
+        <a href="02-ops-dark.html">Abrir opção 2</a>
+      </div>
+      <div class="card">
+        <h2>Opção 3 — Editorial warm</h2>
+        <p>Papel claro, serifas e uma marca mais humana, organizada e acolhedora.</p>
+        <a href="03-editorial-warm.html">Abrir opção 3</a>
+      </div>
+    </div>
+
+    <div class="meta">
+      Documento de pesquisa: <code>research-references.md</code>
+    </div>
+  </div>
+</body>
+</html>

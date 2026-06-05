@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grade Certa — Base de Identidade Visual</title>
+  <meta name="description" content="Base visual do Grade Certa com a direção institucional clean e componentes prontos para Select2." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body id="top">
+  <header>
+    <div class="wrap nav">
+      <a class="brand" href="#top" aria-label="Grade Certa">
+        <span class="mark"></span>
+        <span>Grade Certa</span>
+      </a>
+      <nav aria-label="Navegação principal">
+        <ul>
+          <li><a href="#base">Base</a></li>
+          <li><a href="#componentes">Componentes</a></li>
+          <li><a href="#fluxo">Fluxo</a></li>
+        </ul>
+      </nav>
+      <div class="actions">
+        <a class="btn btn-secondary" href="#componentes">Ver componentes</a>
+        <a class="btn btn-primary" href="#cta">Usar como base</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+      <section class="hero" id="base">
+        <div>
+          <span class="eyebrow"><i></i> Base institucional clean</span>
+          <h1>Organização escolar com clareza, confiança e ritmo.</h1>
+          <p class="lead">
+            Esta é a base visual do Grade Certa para o projeto inteiro: uma interface clara,
+            moderna e estável, já preparada para Select2 e para a linguagem de produto que você usa.
+          </p>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="#cta">Começar por aqui</a>
+            <a class="btn btn-secondary" href="#componentes">Explorar componentes</a>
+          </div>
+          <div class="trust">
+            <span class="chip">Cadastro</span>
+            <span class="chip">Validação</span>
+            <span class="chip">Geração</span>
+            <span class="chip">Select2 pronto</span>
+          </div>
+        </div>
+
+        <div class="panel" aria-label="Prévia do produto">
+          <div class="panel-top">
+            <div class="window-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+            <div class="panel-title">Prévia operacional</div>
+            <div style="width:54px"></div>
+          </div>
+          <div class="panel-body">
+            <div class="filters">
+              <div>
+                <span class="field-label">Unidade</span>
+                <select class="js-select2 select-shell" aria-label="Unidade">
+                  <option></option>
+                  <option>Campus Centro</option>
+                  <option>Campus Norte</option>
+                  <option>Campus Sul</option>
+                </select>
+              </div>
+              <div>
+                <span class="field-label">Período</span>
+                <select class="js-select2 select-shell" aria-label="Período">
+                  <option></option>
+                  <option>Manhã</option>
+                  <option>Tarde</option>
+                  <option>Integral</option>
+                </select>
+              </div>
+              <div>
+                <span class="field-label">Série</span>
+                <select class="js-select2 select-shell" aria-label="Série">
+                  <option></option>
+                  <option>6º ano</option>
+                  <option>7º ano</option>
+                  <option>8º ano</option>
+                  <option>9º ano</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid-card">
+              <div class="grid-head">
+                <strong>Grade semanal</strong>
+                <div class="legend">
+                  <span>Disciplina</span><span>Professor</span><span>Conflito</span>
+                </div>
+              </div>
+              <div class="week">
+                <div class="day"><div class="name">Segunda</div><div class="slot blue">Matemática<small>prof. L. A.</small></div><div class="slot green">História<small>prof. M. S.</small></div></div>
+                <div class="day"><div class="name">Terça</div><div class="slot amber">Ciências<small>prof. R. T.</small></div><div class="slot blue">Português<small>prof. A. V.</small></div></div>
+                <div class="day"><div class="name">Quarta</div><div class="slot green">Arte<small>prof. J. P.</small></div><div class="slot blue">Geografia<small>prof. M. S.</small></div></div>
+                <div class="day"><div class="name">Quinta</div><div class="slot blue">Matemática<small>prof. L. A.</small></div><div class="slot amber">Inglês<small>prof. D. R.</small></div></div>
+                <div class="day"><div class="name">Sexta</div><div class="slot green">Projeto<small>prof. E. C.</small></div><div class="slot blue">Revisão<small>sem conflito</small></div></div>
+              </div>
+            </div>
+
+            <div class="stats">
+              <div class="stat">
+                <h3>Validação antes da geração</h3>
+                <p>Regras, habilitações e disponibilidade entram no fluxo antes da grade ser publicada.</p>
+              </div>
+              <div class="stat">
+                <h3>Versões rastreáveis</h3>
+                <p>Cada tentativa de grade mantém histórico para revisão e comparação.</p>
+              </div>
+              <div class="stat">
+                <h3>Operação sem ruído</h3>
+                <p>Um desenho limpo para conduzir o gestor escolar até a ação principal.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="componentes" class="section">
+        <h2>Componentes-base para o projeto inteiro.</h2>
+        <p class="sub">
+          A mesma linguagem visual pode ser reaproveitada em cadastro, geração de grade, validação e telas internas.
+          O Select2 já vem estilizado para ficar consistente com a identidade.
+        </p>
+        <div class="features">
+          <article class="card">
+            <div class="tag">Tokens</div>
+            <h3>Base clara e neutra</h3>
+            <p>Branco dominante, azuis de confiança e verdes de confirmação para manter o produto moderno e limpo.</p>
+          </article>
+          <article class="card">
+            <div class="tag">Formulários</div>
+            <h3>Select2 com cara de nativo</h3>
+            <p>Os selects ganham borda, sombra e dropdown refinados sem perder a ergonomia do plugin que você já usa.</p>
+          </article>
+          <article class="card">
+            <div class="tag">Componentes</div>
+            <h3>Cartões e etapas reutilizáveis</h3>
+            <p>Cards, passos, CTAs e blocos operacionais já ficam prontos para virar padrões do sistema.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="fluxo" class="section">
+        <h2>Fluxo visual em quatro passos, sem parecer software genérico.</h2>
+        <p class="sub">
+          A composição mantém a leitura fácil e dá suporte ao processo do Grade Certa: preparar a base, validar,
+          gerar e revisar.
+        </p>
+        <div class="steps">
+          <div class="step"><div class="num">1</div><h4>Preparar</h4><p>Cadastre unidade, séries, disciplinas e professores numa base limpa e coerente.</p></div>
+          <div class="step"><div class="num">2</div><h4>Validar</h4><p>O sistema cruza habilitações, períodos e disponibilidade antes de sugerir a grade.</p></div>
+          <div class="step"><div class="num">3</div><h4>Gerar</h4><p>Uma versão de grade nasce pronta para conferência e ajustes controlados.</p></div>
+          <div class="step"><div class="num">4</div><h4>Revisar</h4><p>O histórico preserva o caminho entre tentativas e facilita o diálogo com a escola.</p></div>
+        </div>
+      </section>
+
+      <section id="cta" class="cta-banner">
+        <div>
+          <h2 style="margin:0; font-family: Inter, sans-serif; letter-spacing:-.05em; font-size: clamp(1.5rem, 2.6vw, 2.3rem);">Quer algo mais institucional, mais técnico ou mais editorial?</h2>
+          <p>Esta base já está pronta para ser o ponto de partida do projeto. Se você aprovar, eu posso desdobrar isso em tokens, componentes e páginas internas.</p>
+        </div>
+        <div class="actions">
+          <a class="btn btn-secondary" href="#top">Voltar ao topo</a>
+          <a class="btn btn-primary" href="mailto:hello@gradecerta.com">Usar como base</a>
+        </div>
+      </section>
+
+      <footer>
+        Base institucional clean — pronta para servir de referência visual do Grade Certa.
+      </footer>
+    </div>
+  </main>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script>
+    $(function () {
+      $('.js-select2').select2({
+        placeholder: 'Selecione',
+        allowClear: true,
+        width: 'resolve'
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grade Certa — Opção 3 | Editorial Warm</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #fbf6ef;
+      --paper: #fffdf9;
+      --paper-2: #f6efe5;
+      --text: #243042;
+      --muted: #667489;
+      --line: rgba(36,48,66,.10);
+      --line-strong: rgba(36,48,66,.16);
+      --accent: #2e5ea9;
+      --accent-2: #c07a3b;
+      --accent-3: #5f8f62;
+      --shadow: 0 26px 60px rgba(79,63,37,.12);
+      --shadow-soft: 0 14px 30px rgba(79,63,37,.08);
+      --radius-xl: 30px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --container: 1180px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; min-height: 100vh; color: var(--text);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background:
+        radial-gradient(circle at 12% 0%, rgba(192,122,59,.10), transparent 24%),
+        radial-gradient(circle at 86% 8%, rgba(46,94,169,.09), transparent 22%),
+        linear-gradient(180deg, #fefbf7 0%, var(--bg) 100%);
+      text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    .wrap { width: min(100% - 32px, var(--container)); margin: 0 auto; }
+    header {
+      position: sticky; top: 0; z-index: 10;
+      background: rgba(251,246,239,.74); backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(36,48,66,.06);
+    }
+    .nav {
+      min-height: 78px; display:flex; align-items:center; justify-content:space-between; gap: 20px;
+    }
+    .brand { display:flex; align-items:center; gap: 12px; font-weight: 800; letter-spacing: -.04em; }
+    .crest {
+      width: 38px; height: 38px; border-radius: 13px; background: linear-gradient(145deg, #e2c39d, #cce0db); position: relative;
+      box-shadow: 0 14px 24px rgba(192,122,59,.14);
+    }
+    .crest::before, .crest::after {
+      content: ""; position: absolute; inset: 10px; border-radius: 9px; border: 1px solid rgba(36,48,66,.10);
+    }
+    nav ul { list-style:none; display:flex; gap: 22px; padding:0; margin:0; }
+    nav a { color: var(--muted); font-weight: 600; font-size: .95rem; }
+    nav a:hover { color: var(--text); }
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center; gap: 10px; height: 46px; padding: 0 18px;
+      border-radius: 999px; font-weight: 700; transition: .2s ease; border: 1px solid transparent; white-space: nowrap;
+    }
+    .btn-primary { background: var(--text); color: #fff; }
+    .btn-primary:hover { transform: translateY(-1px); background: #1b2635; }
+    .btn-secondary { background: rgba(255,255,255,.72); border-color: rgba(36,48,66,.10); color: var(--text); }
+    .btn-secondary:hover { border-color: rgba(36,48,66,.18); background: #fff; }
+    main { padding: 34px 0 76px; }
+    .hero {
+      display:grid; grid-template-columns: 1.05fr .95fr; gap: 34px; align-items:center; padding: 26px 0 44px;
+    }
+    .eyebrow {
+      display:inline-flex; align-items:center; gap: 10px; padding: 8px 14px; border-radius: 999px;
+      background: rgba(255,255,255,.78); border: 1px solid rgba(36,48,66,.08); color: var(--accent); font-weight: 700; font-size: .9rem;
+    }
+    .eyebrow .line { width: 16px; height: 2px; border-radius: 999px; background: var(--accent-2); }
+    h1 {
+      margin: 18px 0 16px; font-family: Fraunces, serif; font-size: clamp(3.2rem, 6vw, 5.9rem); line-height: .92; letter-spacing: -.04em; max-width: 11ch;
+      font-weight: 600;
+    }
+    .lead {
+      margin: 0 0 24px; max-width: 62ch; color: var(--muted); font-size: 1.12rem; line-height: 1.84;
+    }
+    .cta-row { display:flex; flex-wrap:wrap; gap: 12px; margin-bottom: 24px; }
+    .meta { display:flex; flex-wrap:wrap; gap: 10px; }
+    .meta .chip {
+      padding: 9px 13px; border-radius: 999px; border: 1px solid rgba(36,48,66,.10); background: rgba(255,255,255,.75);
+      color: #455366; font-weight: 600;
+    }
+    .sheet {
+      border-radius: var(--radius-xl); background: linear-gradient(180deg, rgba(255,253,249,.98), rgba(246,239,229,.95));
+      border: 1px solid rgba(36,48,66,.08); box-shadow: var(--shadow); overflow:hidden; position: relative;
+    }
+    .sheet::before {
+      content: ""; position:absolute; inset: 0; background:
+        linear-gradient(90deg, rgba(36,48,66,.02) 0 1px, transparent 1px 100%),
+        linear-gradient(180deg, rgba(36,48,66,.02) 0 1px, transparent 1px 100%);
+      background-size: 40px 40px;
+      mask-image: linear-gradient(180deg, rgba(0,0,0,.2), transparent 85%);
+      pointer-events:none;
+    }
+    .sheet-top {
+      position: relative; z-index:1; display:flex; align-items:center; justify-content:space-between; gap: 16px; padding: 18px 18px 16px;
+      border-bottom: 1px solid rgba(36,48,66,.08); background: rgba(255,255,255,.55);
+    }
+    .sheet-top .stamp {
+      padding: 6px 10px; border-radius: 999px; background: rgba(46,94,169,.08); border: 1px solid rgba(46,94,169,.10);
+      color: var(--accent); font-family: Fraunces, serif; font-weight: 600;
+    }
+    .sheet-body { position:relative; z-index:1; padding: 18px; display:grid; gap: 14px; }
+    .paper-grid {
+      display:grid; grid-template-columns: 1.15fr .85fr; gap: 14px;
+    }
+    .paper {
+      border-radius: 20px; background: rgba(255,255,255,.84); border: 1px solid rgba(36,48,66,.08); box-shadow: var(--shadow-soft);
+      padding: 18px;
+    }
+    .paper h3 { margin: 0 0 14px; font-family: Fraunces, serif; font-size: 1.45rem; line-height: 1.15; font-weight: 600; }
+    .specs { display:grid; gap: 10px; }
+    .spec {
+      display:flex; justify-content:space-between; align-items:center; gap: 16px; padding: 12px 14px; border-radius: 14px;
+      background: #fff; border: 1px solid rgba(36,48,66,.08);
+    }
+    .spec span { color: var(--muted); font-size: .92rem; }
+    .spec strong { font-weight: 700; }
+    .verse {
+      border-radius: 20px; background: linear-gradient(180deg, #fff, #f9f3ea); border: 1px solid rgba(36,48,66,.08); padding: 18px;
+    }
+    .verse .row { display:flex; justify-content:space-between; align-items:center; gap: 14px; margin-bottom: 14px; }
+    .verse .row strong { font-family: Fraunces, serif; font-size: 1.05rem; }
+    .verse .bars { display:grid; gap: 10px; }
+    .bar {
+      padding: 12px 14px; border-radius: 14px; background: rgba(255,255,255,.94); border: 1px solid rgba(36,48,66,.08);
+      display:flex; justify-content:space-between; gap: 10px; align-items:center;
+    }
+    .bar em { font-style: normal; color: var(--muted); }
+    .bar .b1 { color: var(--accent); font-weight: 700; }
+    .bar .b2 { color: var(--accent-2); font-weight: 700; }
+    .bar .b3 { color: #7f5a25; font-weight: 700; }
+    .section { padding: 42px 0 0; }
+    .section h2 {
+      margin: 0 0 12px; font-family: Fraunces, serif; font-weight: 600; font-size: clamp(1.9rem, 2.8vw, 2.85rem); line-height: 1.02; letter-spacing: -.03em;
+    }
+    .section .sub { margin: 0 0 24px; color: var(--muted); font-size: 1.06rem; line-height: 1.76; max-width: 64ch; }
+    .features { display:grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .feature {
+      padding: 22px; border-radius: 20px; background: rgba(255,255,255,.82); border: 1px solid rgba(36,48,66,.08); box-shadow: var(--shadow-soft);
+    }
+    .feature .label { font-weight: 800; color: var(--accent-2); text-transform: uppercase; letter-spacing: .1em; font-size: .78rem; }
+    .feature h3 { margin: 10px 0 10px; font-family: Fraunces, serif; font-size: 1.35rem; line-height: 1.08; }
+    .feature p { margin: 0; color: var(--muted); line-height: 1.7; }
+    .process {
+      display:grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 18px;
+    }
+    .process .item {
+      padding: 18px; border-radius: 18px; background: linear-gradient(180deg, #fff, #f7f0e7); border: 1px solid rgba(36,48,66,.08);
+    }
+    .process .n { font-family: Fraunces, serif; font-size: 1.2rem; color: var(--accent); }
+    .process h4 { margin: 12px 0 8px; font-size: 1rem; }
+    .process p { margin: 0; color: var(--muted); line-height: 1.6; }
+    .cta-banner {
+      margin-top: 48px; padding: 28px; border-radius: 28px; background: linear-gradient(135deg, #fffdf9, #f7ecdf);
+      border: 1px solid rgba(36,48,66,.08); box-shadow: var(--shadow);
+      display:flex; justify-content:space-between; align-items:center; gap: 20px;
+    }
+    .cta-banner p { margin: 8px 0 0; color: var(--muted); line-height: 1.68; max-width: 60ch; }
+    footer { padding: 20px 0 0; color: var(--muted); font-size: .94rem; }
+    @media (max-width: 1040px) {
+      .hero { grid-template-columns: 1fr; }
+      .paper-grid { grid-template-columns: 1fr; }
+      .features, .process { grid-template-columns: 1fr 1fr; }
+      nav ul { display:none; }
+    }
+    @media (max-width: 720px) {
+      .nav { min-height: 72px; }
+      .actions { display:none; }
+      h1 { font-size: clamp(2.5rem, 12vw, 4rem); }
+      .features, .process { grid-template-columns: 1fr; }
+      .cta-banner { flex-direction: column; align-items:flex-start; }
+      .sheet-body { padding: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap nav">
+      <a class="brand" href="#top">
+        <span class="crest" aria-hidden="true"></span>
+        <span>Grade Certa</span>
+      </a>
+      <nav aria-label="Navegação principal">
+        <ul>
+          <li><a href="#produto">Produto</a></li>
+          <li><a href="#fluxo">Fluxo</a></li>
+          <li><a href="#tom">Tom</a></li>
+        </ul>
+      </nav>
+      <div class="actions">
+        <a class="btn btn-secondary" href="#opcoes">Comparar estilos</a>
+        <a class="btn btn-primary" href="#cta">Ver ajuste final</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <div class="wrap">
+      <section class="hero">
+        <div>
+          <span class="eyebrow"><span class="line"></span> Opção 3 • editorial warm</span>
+          <h1>Uma marca escolar que parece organizada, humana e fácil de ler.</h1>
+          <p class="lead">
+            Essa direção troca o clima corporativo por uma leitura mais editorial e acolhedora.
+            O resultado continua moderno e clean, mas com mais calor visual e uma sensação de clareza serena.
+          </p>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="#cta">Quero essa vibe</a>
+            <a class="btn btn-secondary" href="#produto">Explorar a composição</a>
+          </div>
+          <div class="meta">
+            <span class="chip">Calma</span>
+            <span class="chip">Clareza</span>
+            <span class="chip">Confiança</span>
+            <span class="chip">Humanidade</span>
+          </div>
+        </div>
+
+        <div class="sheet" aria-label="Prévia editorial do produto">
+          <div class="sheet-top">
+            <div style="display:flex; align-items:center; gap:10px; color: var(--muted);">
+              <span class="stamp">Campus Sul</span>
+              <span style="font-size:.92rem;">grade em revisão</span>
+            </div>
+            <div class="chip" style="background: rgba(46,94,169,.08); color: var(--accent);">v0.9</div>
+          </div>
+          <div class="sheet-body">
+            <div class="paper-grid">
+              <div class="paper">
+                <h3>O que entra na estrutura</h3>
+                <div class="specs">
+                  <div class="spec"><span>Unidade</span><strong>Campus Centro</strong></div>
+                  <div class="spec"><span>Período</span><strong>Manhã</strong></div>
+                  <div class="spec"><span>Série</span><strong>7º ano</strong></div>
+                  <div class="spec"><span>Estado</span><strong>validado</strong></div>
+                </div>
+              </div>
+              <div class="verse">
+                <div class="row"><strong>Uma semana, quatro camadas</strong><span style="color:var(--muted); font-size:.9rem;">leitura rápida</span></div>
+                <div class="bars">
+                  <div class="bar"><span class="b1">Base</span><em>cadastro e organização</em></div>
+                  <div class="bar"><span class="b2">Regra</span><em>conflitos e habilitação</em></div>
+                  <div class="bar"><span class="b3">Versão</span><em>geração rastreável</em></div>
+                  <div class="bar"><span class="b1">Revisão</span><em>decisão com contexto</em></div>
+                </div>
+              </div>
+            </div>
+            <div class="verse">
+              <div class="row"><strong>Visão da grade</strong><span style="color:var(--muted); font-size:.9rem;">sem poluição</span></div>
+              <div class="bars">
+                <div class="bar"><span class="b1">Segunda</span><em>Matemática • História</em></div>
+                <div class="bar"><span class="b2">Terça</span><em>Português • Ciências</em></div>
+                <div class="bar"><span class="b3">Quarta</span><em>Arte • Geografia</em></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="produto" class="section">
+        <h2>Mais editorial, menos “dashboard”. Ainda assim, tudo continua claro.</h2>
+        <p class="sub">
+          A proposta usa bastante espaço em branco, tipografia com personalidade e cartões mais suaves. Isso cria uma percepção de marca mais humana, sem perder o rigor do produto.
+        </p>
+        <div class="features">
+          <article class="feature">
+            <div class="label">Acolhedor</div>
+            <h3>Uma interface que não intimida</h3>
+            <p>Boa para vender a ideia de simplicidade: o sistema parece acessível antes mesmo de ser explicado.</p>
+          </article>
+          <article class="feature">
+            <div class="label">Editorial</div>
+            <h3>Tipografia com caráter</h3>
+            <p>O título serifado dá uma assinatura mais marcante e diferencia o Grade Certa das interfaces SaaS usuais.</p>
+          </article>
+          <article class="feature">
+            <div class="label">Organizado</div>
+            <h3>Estrutura visual tranquila</h3>
+            <p>A leitura segue um ritmo calmo, com blocos bem espaçados e pouca pressão visual sobre o usuário.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="fluxo" class="section">
+        <h2>Uma composição que explica a operação como uma narrativa curta.</h2>
+        <p class="sub">
+          Em vez de parecer uma lista de funcionalidades, o fluxo vira uma sequência compreensível: construir base, validar, gerar e revisar.
+        </p>
+        <div class="process">
+          <div class="item"><div class="n">01</div><h4>Construir base</h4><p>Os dados centrais entram numa organização visual limpa e fácil de conferir.</p></div>
+          <div class="item"><div class="n">02</div><h4>Validar</h4><p>As regras de negócio aparecem como proteção da qualidade, não como obstáculo.</p></div>
+          <div class="item"><div class="n">03</div><h4>Gerar</h4><p>A grade é apresentada como resultado de um processo inteligente e rastreável.</p></div>
+          <div class="item"><div class="n">04</div><h4>Revisar</h4><p>O histórico e a versão dão segurança para avançar sem perder contexto.</p></div>
+        </div>
+      </section>
+
+      <section id="cta" class="cta-banner">
+        <div>
+          <h2 style="margin:0; font-family: Fraunces, serif; font-size: clamp(1.5rem, 2.6vw, 2.3rem); line-height:1.05;">Se você quiser uma marca mais humana, essa é a direção mais elegante.</h2>
+          <p>Ela é menos “software de operação” e mais “marca de produto confiável”. Continua limpa, mas com mais personalidade.</p>
+        </div>
+        <div class="actions">
+          <a class="btn btn-secondary" href="#top">Voltar ao topo</a>
+          <a class="btn btn-primary" href="mailto:hello@gradecerta.com">Refinar essa opção</a>
+        </div>
+      </section>
+
+      <footer>
+        Opção 3 — editorial warm, com papel claro, serifas e uma atmosfera mais humana.
+      </footer>
+    </div>
+  </main>
+</body>
+</html>
