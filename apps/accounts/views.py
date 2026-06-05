@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
+from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic import FormView
@@ -13,7 +14,7 @@ class LoginView(FormView):
 
     form_class = UserLoginForm
     template_name = "accounts/login.html"
-    success_url = "/"
+    success_url = reverse_lazy("dashboard")
 
     def form_valid(self, form):
         username = form.cleaned_data["username"]
@@ -33,9 +34,16 @@ class LogoutView(View):
         return redirect("login")
 
 
+class LandingView(View):
+    """Public landing page for schools considering the product."""
+
+    def get(self, request):
+        return render(request, "landing.html")
+
+
 @method_decorator(login_required(login_url="/accounts/login/"), name="dispatch")
-class HomeView(View):
-    """Simple home page after login."""
+class DashboardView(View):
+    """Authenticated home page after login."""
 
     def get(self, request):
         return render(request, "home.html")

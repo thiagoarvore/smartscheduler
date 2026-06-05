@@ -1,0 +1,483 @@
+{% extends "base.html" %}
+
+{% block title %}Grade Certa — Landing{% endblock %}
+
+{% block body %}
+<style>
+    .landing-hero {
+        padding: 72px 0 32px;
+        background:
+            radial-gradient(circle at 10% 0%, rgba(47, 111, 237, 0.11), transparent 28%),
+            radial-gradient(circle at 90% 10%, rgba(22, 163, 122, 0.11), transparent 24%);
+    }
+
+    .landing-grid {
+        display: grid;
+        grid-template-columns: 1.12fr .88fr;
+        gap: 32px;
+        align-items: center;
+    }
+
+    .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: rgba(47, 111, 237, 0.10);
+        color: var(--color-primary);
+        font-weight: 700;
+        font-size: .92rem;
+        margin-bottom: 18px;
+    }
+
+    .eyebrow__dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--color-secondary);
+        display: inline-block;
+    }
+
+    .landing-title {
+        font-size: clamp(2.4rem, 5vw, 4.6rem);
+        line-height: 1;
+        letter-spacing: -0.06em;
+        margin-bottom: 18px;
+    }
+
+    .landing-lead {
+        font-size: 1.12rem;
+        line-height: 1.75;
+        color: var(--color-text-muted);
+        max-width: 58ch;
+        margin-bottom: 28px;
+    }
+
+    .cta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .landing-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .landing-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid var(--color-border);
+        color: var(--color-text-muted);
+        font-size: .9rem;
+        font-weight: 600;
+    }
+
+    .preview-card {
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid var(--color-border);
+        border-radius: 24px;
+        box-shadow: var(--shadow-xl);
+        overflow: hidden;
+    }
+
+    .preview-card__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 18px 20px;
+        border-bottom: 1px solid var(--color-border);
+        background: linear-gradient(180deg, #f8fbff, #fff);
+    }
+
+    .dots {
+        display: inline-flex;
+        gap: 7px;
+    }
+
+    .dots span {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: rgba(19, 34, 56, 0.18);
+    }
+
+    .dots span:first-child { background: #ff6b6b; }
+    .dots span:nth-child(2) { background: #f0b849; }
+    .dots span:nth-child(3) { background: #2ed07e; }
+
+    .preview-card__title {
+        font-weight: 700;
+        color: var(--color-text);
+        text-align: center;
+    }
+
+    .preview-card__body {
+        padding: 20px;
+        display: grid;
+        gap: 16px;
+    }
+
+    .preview-filters {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+
+    .preview-filter {
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid var(--color-border);
+        background: #fff;
+        color: var(--color-text-muted);
+        font-size: .92rem;
+        font-weight: 600;
+    }
+
+    .preview-filter strong {
+        display: block;
+        color: var(--color-text);
+        margin-top: 4px;
+    }
+
+    .preview-week {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+    }
+
+    .preview-day {
+        min-height: 145px;
+        padding: 12px;
+        border-radius: 18px;
+        background: linear-gradient(180deg, #fff, #f7fbff);
+        border: 1px solid var(--color-border);
+        display: grid;
+        gap: 10px;
+        align-content: start;
+    }
+
+    .preview-day__name {
+        font-size: .84rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: #35506c;
+    }
+
+    .slot {
+        padding: 10px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: .86rem;
+        line-height: 1.15;
+    }
+
+    .slot small {
+        display: block;
+        margin-top: 4px;
+        font-weight: 600;
+        opacity: .8;
+    }
+
+    .slot--blue {
+        color: #1851c7;
+        background: rgba(47, 111, 237, 0.10);
+        border: 1px solid rgba(47, 111, 237, 0.10);
+    }
+
+    .slot--green {
+        color: #0d7e5d;
+        background: rgba(22, 163, 122, 0.11);
+        border: 1px solid rgba(22, 163, 122, 0.12);
+    }
+
+    .slot--amber {
+        color: #8d6200;
+        background: rgba(240, 184, 73, 0.14);
+        border: 1px solid rgba(240, 184, 73, 0.16);
+    }
+
+    .section {
+        padding: 20px 0 0;
+    }
+
+    .section__title {
+        font-size: clamp(1.7rem, 3vw, 2.6rem);
+        line-height: 1.05;
+        letter-spacing: -0.05em;
+        margin-bottom: 12px;
+    }
+
+    .section__lead {
+        color: var(--color-text-muted);
+        line-height: 1.7;
+        max-width: 64ch;
+        margin-bottom: 24px;
+    }
+
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+
+    .feature-card {
+        padding: 22px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid var(--color-border);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .feature-card__kicker {
+        color: var(--color-primary);
+        font-weight: 800;
+        font-size: .82rem;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+
+    .feature-card h3 {
+        margin: 10px 0 10px;
+        font-size: 1.18rem;
+        letter-spacing: -0.04em;
+    }
+
+    .feature-card p {
+        margin: 0;
+        color: var(--color-text-muted);
+        line-height: 1.65;
+    }
+
+    .steps {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+    }
+
+    .step {
+        padding: 18px;
+        border-radius: 18px;
+        background: linear-gradient(180deg, #fff, #f8fbff);
+        border: 1px solid var(--color-border);
+    }
+
+    .step__num {
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        background: rgba(47, 111, 237, 0.10);
+        color: var(--color-primary);
+        font-weight: 800;
+    }
+
+    .step h4 {
+        margin: 14px 0 8px;
+        font-size: 1.04rem;
+    }
+
+    .step p {
+        margin: 0;
+        color: var(--color-text-muted);
+        line-height: 1.6;
+    }
+
+    .cta-banner {
+        margin-top: 28px;
+        padding: 28px;
+        border-radius: 28px;
+        background: linear-gradient(135deg, #1f56d3, #289ca0);
+        color: #fff;
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        align-items: center;
+    }
+
+    .cta-banner p {
+        margin: 8px 0 0;
+        color: rgba(255, 255, 255, 0.82);
+        line-height: 1.65;
+        max-width: 58ch;
+    }
+
+    .cta-banner .btn--ghost {
+        border-color: rgba(255, 255, 255, 0.24);
+        color: #fff;
+        background: rgba(255, 255, 255, 0.12);
+    }
+
+    .cta-banner .btn--ghost:hover {
+        background: rgba(255, 255, 255, 0.20);
+    }
+
+    @media (max-width: 980px) {
+        .landing-grid,
+        .feature-grid,
+        .steps,
+        .preview-filters,
+        .preview-week {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .landing-grid {
+            gap: 24px;
+        }
+    }
+
+    @media (max-width: 720px) {
+        .landing-hero {
+            padding-top: 40px;
+        }
+
+        .landing-grid,
+        .feature-grid,
+        .steps,
+        .preview-filters,
+        .preview-week {
+            grid-template-columns: 1fr;
+        }
+
+        .cta-banner {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+</style>
+
+<div class="container landing-hero">
+    <div class="landing-grid">
+        <section>
+            <div class="eyebrow"><span class="eyebrow__dot"></span> Para escolas que querem vender e operar com clareza</div>
+            <h1 class="landing-title">Valide, organize e venda sua operação de grade.</h1>
+            <p class="landing-lead">
+                O Grade Certa já pode receber escolas antes mesmo do motor completo estar pronto:
+                a landing apresenta o produto, explica a proposta de valor e abre o caminho para contratação.
+            </p>
+            <div class="cta-row">
+                <a class="btn btn--primary btn--lg" href="{% url 'login' %}">Entrar no sistema</a>
+                <a class="btn btn--ghost btn--lg" href="mailto:comercial@gradecerta.com?subject=Quero%20conhecer%20o%20Grade%20Certa">Quero contratar</a>
+            </div>
+            <div class="landing-pills">
+                <span class="landing-pill">Cadastro de escola</span>
+                <span class="landing-pill">Validação de dados</span>
+                <span class="landing-pill">Pré-venda pronta</span>
+                <span class="landing-pill">Multi-tenant</span>
+            </div>
+        </section>
+
+        <section class="preview-card" aria-label="Prévia do produto">
+            <div class="preview-card__header">
+                <span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>
+                <div class="preview-card__title">Visão da grade da semana</div>
+                <span style="width: 54px;"></span>
+            </div>
+            <div class="preview-card__body">
+                <div class="preview-filters">
+                    <div class="preview-filter">Unidade<strong>Campus Centro</strong></div>
+                    <div class="preview-filter">Período<strong>Manhã</strong></div>
+                    <div class="preview-filter">Série<strong>7º ano</strong></div>
+                </div>
+                <div class="preview-week">
+                    <div class="preview-day">
+                        <div class="preview-day__name">Segunda</div>
+                        <div class="slot slot--blue">Matemática<small>7º ano A</small></div>
+                        <div class="slot slot--green">Ciências<small>Laboratório</small></div>
+                    </div>
+                    <div class="preview-day">
+                        <div class="preview-day__name">Terça</div>
+                        <div class="slot slot--amber">História<small>Bloco duplo</small></div>
+                        <div class="slot slot--blue">Língua Portuguesa<small>Sem conflito</small></div>
+                    </div>
+                    <div class="preview-day">
+                        <div class="preview-day__name">Quarta</div>
+                        <div class="slot slot--green">Inglês<small>Professor disponível</small></div>
+                        <div class="slot slot--amber">Artes<small>Compartilhada</small></div>
+                    </div>
+                    <div class="preview-day">
+                        <div class="preview-day__name">Quinta</div>
+                        <div class="slot slot--blue">Geografia<small>Planejada</small></div>
+                        <div class="slot slot--green">Educação Física<small>Quadra</small></div>
+                    </div>
+                    <div class="preview-day">
+                        <div class="preview-day__name">Sexta</div>
+                        <div class="slot slot--amber">Projeto Integrador<small>Validação OK</small></div>
+                        <div class="slot slot--blue">Revisão semanal<small>Sem choque</small></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <section class="section" id="produto">
+        <h2 class="section__title">Uma página comercial pronta antes da operação completa.</h2>
+        <p class="section__lead">
+            A landing page serve como porta de entrada para escolas interessadas no serviço, permitindo
+            apresentar a proposta, abrir contato e manter a estrutura de aquisição pronta enquanto o produto evolui.
+        </p>
+        <div class="feature-grid">
+            <article class="feature-card">
+                <div class="feature-card__kicker">1. Interesse</div>
+                <h3>Explica o valor em poucos segundos</h3>
+                <p>Mostra que o produto resolve a montagem de grades complexas com menos planilhas e menos retrabalho.</p>
+            </article>
+            <article class="feature-card">
+                <div class="feature-card__kicker">2. Conversão</div>
+                <h3>Abre caminho para contratação</h3>
+                <p>Inclui um CTA direto para falar com a equipe comercial e seguir para a negociação do serviço.</p>
+            </article>
+            <article class="feature-card">
+                <div class="feature-card__kicker">3. Preparação</div>
+                <h3>Não depende do motor final</h3>
+                <p>Pode entrar no ar antes do produto estar pronto, sem bloquear a evolução da base técnica e funcional.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="section" id="fluxo">
+        <h2 class="section__title">Fluxo simples para a escola começar.</h2>
+        <p class="section__lead">
+            O produto começa na vitrine, passa pela conversa comercial e desemboca no tenant da escola,
+            já preparado para a operação do Grade Certa.
+        </p>
+        <div class="steps">
+            <article class="step">
+                <div class="step__num">1</div>
+                <h4>A escola acessa a landing</h4>
+                <p>Entende rapidamente o que o Grade Certa faz e por que vale a pena continuar a conversa.</p>
+            </article>
+            <article class="step">
+                <div class="step__num">2</div>
+                <h4>O interesse vira contato</h4>
+                <p>O CTA leva para a equipe comercial, que prepara o próximo passo da contratação.</p>
+            </article>
+            <article class="step">
+                <div class="step__num">3</div>
+                <h4>O tenant teste já está pronto</h4>
+                <p>O ambiente sobe com o tenant <strong>colegioobjetivo</strong> se ele ainda não existir.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="cta-banner" id="cta">
+        <div>
+            <strong>Grade Certa pronto para vender e pronto para subir em teste.</strong>
+            <p>Landing pública para aquisição + tenant teste automático no pós-migrate, sem travar a evolução do serviço.</p>
+        </div>
+        <div class="cta-row" style="margin: 0;">
+            <a class="btn btn--ghost btn--lg" href="{% url 'login' %}">Entrar</a>
+            <a class="btn btn--primary btn--lg" href="mailto:comercial@gradecerta.com?subject=Quero%20contratar%20o%20Grade%20Certa">Contratar</a>
+        </div>
+    </section>
+</div>
+{% endblock %}

@@ -59,8 +59,8 @@ SHARED_APPS = [
     "django.contrib.staticfiles",
     "auditlog",
     "django_base_kit",
-    "apps.tenants",
-    "apps.accounts",
+    "apps.tenants.apps.TenantsConfig",
+    "apps.accounts.apps.AccountsConfig",
 ]
 
 TENANT_APPS = [
@@ -154,7 +154,7 @@ PUBLIC_SCHEMA_URL_PREFIX = ""
 AUTH_USER_MODEL = "accounts.User"
 
 LOGIN_URL = "/accounts/login/"
-LOGIN_REDIRECT_URL = "/"
+LOGIN_REDIRECT_URL = "/dashboard/"
 LOGOUT_REDIRECT_URL = LOGIN_URL
 
 # Password validation

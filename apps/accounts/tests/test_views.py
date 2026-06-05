@@ -28,7 +28,7 @@ class TestLoginView:
             {"username": "login@gradecerta.com", "password": "testpass12345"},
         )
         assert response.status_code == 302
-        assert response.url == "/"
+        assert response.url == "/dashboard/"
 
     def test_login_with_invalid_credentials(self):
         client = Client()
@@ -40,15 +40,23 @@ class TestLoginView:
 
 
 @pytest.mark.django_db
-class TestHomeView:
-    """Tests for the home view."""
+class TestLandingAndDashboardViews:
+    """Tests for the public landing page and authenticated dashboard."""
 
-    def test_home_requires_login(self):
+    def test_landing_page_renders_without_login(self):
         client = Client()
-        response = client.get(reverse("home"))
-        assert response.status_code == 302  # Redirects to login
+        response = client.get(reverse("landing"))
+        assert response.status_code == 200
+        body = response.content.decode()
+        assert "Grade Certa" in body
+        assert "Valide, organize e venda sua operação de grade" in body
 
-    def test_home_accessible_after_login(self):
+    def test_dashboard_requires_login(self):
+        client = Client()
+        response = client.get(reverse("dashboard"))
+        assert response.status_code == 302
+
+    def test_dashboard_accessible_after_login(self):
         user = User.objects.create_user(
             username="testuser",
             email="home@gradecerta.com",
@@ -56,5 +64,5 @@ class TestHomeView:
         )
         client = Client()
         client.force_login(user)
-        response = client.get(reverse("home"))
+        response = client.get(reverse("dashboard"))
         assert response.status_code == 200

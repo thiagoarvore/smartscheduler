@@ -26,4 +26,16 @@ DATABASE_ROUTERS = ()
 INSTALLED_APPS = [app for app in INSTALLED_APPS if app != "django_tenants"]  # noqa: F405
 
 # Remove TenantMiddleware for SQLite tests
-MIDDLEWARE = [m for m in MIDDLEWARE if m != "django_tenants.middleware.default.DefaultTenantMiddleware"]  # noqa: F405
+MIDDLEWARE = [  # noqa: F405
+    m
+    for m in MIDDLEWARE  # noqa: F405
+    if m not in {
+        "django_tenants.middleware.default.DefaultTenantMiddleware",
+        "whitenoise.middleware.WhiteNoiseMiddleware",
+    }
+]
+
+# Avoid WhiteNoise manifest lookups in SQLite tests
+STORAGES["staticfiles"] = {  # noqa: F405
+    "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+}

@@ -21,8 +21,8 @@ class TestSettings:
         assert settings.TIME_ZONE == "America/Sao_Paulo"
 
     def test_shared_apps_contains_tenants_and_accounts(self, settings):
-        assert "apps.tenants" in settings.SHARED_APPS
-        assert "apps.accounts" in settings.SHARED_APPS
+        assert "apps.tenants.apps.TenantsConfig" in settings.SHARED_APPS
+        assert "apps.accounts.apps.AccountsConfig" in settings.SHARED_APPS
 
 
 class TestProductionSettings:
