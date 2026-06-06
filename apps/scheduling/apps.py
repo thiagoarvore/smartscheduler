@@ -1,10 +1,10 @@
 from django.apps import AppConfig
 
 
-class AccountsConfig(AppConfig):
+class SchedulingConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
-    name = "apps.accounts"
-    verbose_name = "Contas"
+    name = "apps.scheduling"
+    verbose_name = "Scheduling"
 
     def ready(self):
         from . import signals  # noqa: F401

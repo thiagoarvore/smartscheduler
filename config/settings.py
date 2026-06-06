@@ -72,6 +72,8 @@ TENANT_APPS = [
     "django.contrib.staticfiles",
     "apps.schools.apps.SchoolsConfig",
     "apps.curriculum.apps.CurriculumConfig",
+    "apps.people.apps.PeopleConfig",
+    "apps.scheduling.apps.SchedulingConfig",
 ]
 
 INSTALLED_APPS = list(SHARED_APPS) + [

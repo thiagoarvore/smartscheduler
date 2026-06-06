@@ -1,9 +1,14 @@
+from auditlog.registry import auditlog
 from django.conf import settings
 from django.db import connection
 from django.db.models.signals import post_migrate
 from django.dispatch import receiver
 
 from apps.tenants.bootstrap import ensure_demo_tenant
+from apps.tenants.models import Domain, Tenant
+
+auditlog.register(Tenant)
+auditlog.register(Domain)
 
 
 @receiver(post_migrate)

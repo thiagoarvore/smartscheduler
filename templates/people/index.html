@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Grade Certa — Pessoas{% endblock %}
+
+{% block body %}
+<main class="page-content">
+    <div class="container">
+        <div class="card">
+            <div class="card__header">
+                <h1 class="card__title">Pessoas</h1>
+            </div>
+            <p class="text-muted">Cadastre professores, habilitações e disponibilidade.</p>
+            <ul>
+                <li><a href="{% url 'people:teacher-list' %}">Professores</a></li>
+                <li><a href="{% url 'people:teacherqualification-list' %}">Habilitações</a></li>
+                <li><a href="{% url 'people:teacheravailability-list' %}">Disponibilidades</a></li>
+            </ul>
+        </div>
+    </div>
+</main>
+{% endblock %}
