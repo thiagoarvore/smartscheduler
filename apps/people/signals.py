@@ -1,7 +1,2 @@
-from auditlog.registry import auditlog
-
-from .models import Teacher, TeacherAvailability, TeacherQualification
-
-auditlog.register(Teacher)
-auditlog.register(TeacherQualification)
-auditlog.register(TeacherAvailability)
+# Auditlog registrations have been moved to models.py
+# This file is kept for future signal-based logic only.

@@ -27,7 +27,12 @@ class Teacher(BaseModel):
         choices=StatusChoices.choices,
         default=StatusChoices.ACTIVE,
     )
-    max_weekly_load = models.PositiveIntegerField(_("carga semanal máxima"), null=True, blank=True)
+    weekly_load = models.PositiveIntegerField(
+        _("carga semanal"),
+        null=True,
+        blank=True,
+        help_text=_("Carga horária semanal exata do professor (em aulas)."),
+    )
     notes = models.TextField(_("observações"), blank=True)
 
     class Meta:
@@ -175,9 +180,18 @@ class TeacherAvailability(BaseModel):
         if self.tenant_id and self.teacher_id and self.teacher.tenant_id != self.tenant_id:
             errors["teacher"] = _("O professor deve pertencer ao mesmo tenant.")
         if self.start_time and self.end_time and self.start_time >= self.end_time:
-            errors["end_time"] = _("O horário de término deve ser maior que o horário de início.")
+            errors["end_time"] = _("O horário de término deve ser posterior ao horário de início.")
         if errors:
             raise ValidationError(errors)
 
     def __str__(self):
-        return f"{self.teacher.name} — {self.get_weekday_display()}"
+        label = "✓" if self.is_available else "✗"
+        return f"{self.teacher.name} {self.get_weekday_display()} {self.start_time}–{self.end_time} {label}"
+
+
+# Auditlog registration — moved from signals.py
+from auditlog.registry import auditlog  # noqa: E402
+
+auditlog.register(Teacher)
+auditlog.register(TeacherQualification)
+auditlog.register(TeacherAvailability)

@@ -13,6 +13,7 @@ psycopg2-binary = "^2.9"
 django-tenants = "^3.10"
 django-base-kit = "^0.1.4"
 django-auditlog = "^3.4"
+django-widget-tweaks = "^1.5"
 python-decouple = "^3.8"
 whitenoise = "^6.12"
 

@@ -679,3 +679,161 @@ img { max-width: 100%; display: block; }
   font-size: 0.8125rem;
   color: var(--color-text-muted);
 }
+
+/* --- Availability Weekly Grid -------------------------------------------- */
+.availability-grid {
+  overflow-x: auto;
+}
+
+.availability-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 2px;
+  font-size: 0.8125rem;
+}
+
+.availability-table th {
+  background: var(--color-bg-alt);
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  padding: var(--sp-2) var(--sp-3);
+  text-align: center;
+  border-radius: var(--radius-sm);
+}
+
+.availability-table__time {
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--color-bg-alt);
+  border-radius: var(--radius-sm);
+}
+
+.availability-table__cell {
+  text-align: center;
+  padding: var(--sp-1);
+  min-width: 80px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+}
+
+.availability-table__cell--available {
+  background: rgba(22, 163, 122, 0.15);
+}
+
+.availability-table__cell--blocked {
+  background: var(--color-danger-bg);
+}
+
+.availability-table__cell--empty {
+  background: var(--color-bg-alt);
+}
+
+.availability-table__cell input[type="checkbox"] {
+  display: none;
+}
+
+.availability-table__cell label {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+}
+
+.availability-table__cell input:checked + label {
+  background: var(--color-secondary);
+  opacity: 0.7;
+}
+
+/* --- Delete Confirmation ------------------------------------------------- */
+.delete-confirm {
+  text-align: center;
+}
+
+.delete-confirm__icon {
+  margin-bottom: var(--sp-4);
+}
+
+.delete-confirm__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--sp-2);
+}
+
+.delete-confirm__message {
+  color: var(--color-text-muted);
+  margin-bottom: var(--sp-6);
+}
+
+.delete-confirm__actions {
+  display: flex;
+  gap: var(--sp-3);
+  justify-content: center;
+}
+
+.delete-confirm__warning {
+  color: var(--color-danger);
+  font-size: 0.9375rem;
+  margin-bottom: var(--sp-4);
+}
+
+/* --- Form Help and Errors ------------------------------------------------ */
+.form-help {
+  display: block;
+  margin-top: var(--sp-1);
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.form-errors {
+  margin-top: var(--sp-1);
+}
+
+.form-error {
+  display: block;
+  font-size: 0.8125rem;
+  color: var(--color-danger);
+}
+
+/* --- Checkbox Select Multiple --------------------------------------------- */
+.form-group .checkbox-select {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+.form-group .checkbox-select label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9375rem;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.form-group .checkbox-select label:hover {
+  background: var(--color-bg-alt);
+}
+
+.form-group .checkbox-select input:checked + label {
+  background: rgba(47, 111, 237, 0.08);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.form-group .checkbox-select input {
+  display: none;
+}

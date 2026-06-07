@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% load widget_tweaks %}
 
 {% block title %}Grade Certa — {{ model_verbose_name|title }}{% endblock %}
 
 {% block page_content %}
 <div class="page-header mb-6">
     <a href="{% url list_url_name %}" class="btn btn--ghost btn--sm mb-4">
-        ← Voltar
+        &larr; Voltar
     </a>
     <h1 class="page-title">{{ model_verbose_name|title }}</h1>
 </div>
@@ -13,7 +14,26 @@
 <div class="card" style="max-width: 640px;">
     <form method="post" class="form-stack">
         {% csrf_token %}
-        {{ form.as_p }}
+        {% for field in form %}
+            {% if field.name == "tenant" or field.name == "default_settings" %}
+                {# Skip internal fields that should not be visible #}
+            {% else %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {% render_field field class="form-control" %}
+                    {% if field.help_text %}
+                        <small class="form-help">{{ field.help_text }}</small>
+                    {% endif %}
+                    {% if field.errors %}
+                        <div class="form-errors">
+                            {% for error in field.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% endfor %}
         <div class="form-actions">
             <button type="submit" class="btn btn--primary">Salvar</button>
             <a href="{% url list_url_name %}" class="btn btn--ghost">Cancelar</a>

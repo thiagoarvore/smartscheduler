@@ -17,14 +17,14 @@ class Unit(BaseModel):
     )
     code = models.CharField(_("código"), max_length=50, blank=True)
     name = models.CharField(_("nome"), max_length=200)
+    address = models.TextField(_("endereço"), blank=True, default="")
     status = models.CharField(
         _("status"),
         max_length=20,
         choices=StatusChoices.choices,
         default=StatusChoices.ACTIVE,
     )
-    timezone = models.CharField(_("fuso horário"), max_length=64, blank=True)
-    default_settings = models.JSONField(_("configurações padrão"), default=dict, blank=True)
+    timezone = models.CharField(_("fuso horário"), max_length=64, blank=True, default="America/Sao_Paulo")
 
     class Meta:
         verbose_name = _("unidade")
@@ -81,11 +81,17 @@ class Period(BaseModel):
         related_name="periods",
         verbose_name=_("tenant"),
     )
-    unit = models.ForeignKey(
+    is_tenant_default = models.BooleanField(
+        _("padrão do tenant"),
+        default=False,
+        help_text=_("Se marcado, este período se aplica a todas as unidades do tenant."),
+    )
+    units = models.ManyToManyField(
         Unit,
-        on_delete=models.CASCADE,
+        blank=True,
         related_name="periods",
-        verbose_name=_("unidade"),
+        verbose_name=_("unidades"),
+        help_text=_("Unidades específicas associadas a este período. Deixe vazio se for padrão do tenant."),
     )
     name = models.CharField(_("nome"), max_length=200)
     type = models.CharField(_("tipo"), max_length=20, choices=TypeChoices.choices)
@@ -102,15 +108,17 @@ class Period(BaseModel):
     class Meta:
         verbose_name = _("período")
         verbose_name_plural = _("períodos")
-        ordering = ["unit__name", "order", "name"]
-
-    def clean(self):
-        super().clean()
-        if self.tenant_id and self.unit_id and self.unit.tenant_id != self.tenant_id:
-            raise ValidationError({"unit": _("A unidade deve pertencer ao mesmo tenant.")})
+        ordering = ["order", "name"]
 
     def __str__(self):
         return self.name
+
+    def clean(self):
+        super().clean()
+        if self.is_tenant_default and self.units.exists():
+            raise ValidationError(
+                {"units": _("Períodos padrão do tenant não devem ter unidades específicas.")}
+            )
 
 
 class Series(BaseModel):
@@ -124,11 +132,23 @@ class Series(BaseModel):
         related_name="series_set",
         verbose_name=_("tenant"),
     )
+    is_tenant_default = models.BooleanField(
+        _("padrão do tenant"),
+        default=False,
+        help_text=_("Se marcado, esta série se aplica a todas as unidades do tenant."),
+    )
     teaching_level = models.ForeignKey(
         TeachingLevel,
         on_delete=models.CASCADE,
         related_name="series",
         verbose_name=_("nível de ensino"),
+    )
+    units = models.ManyToManyField(
+        Unit,
+        blank=True,
+        related_name="series_set",
+        verbose_name=_("unidades"),
+        help_text=_("Unidades específicas associadas a esta série. Deixe vazio se for padrão do tenant."),
     )
     code = models.CharField(_("código"), max_length=50, blank=True)
     name = models.CharField(_("nome"), max_length=200)
@@ -149,6 +169,10 @@ class Series(BaseModel):
         super().clean()
         if self.tenant_id and self.teaching_level_id and self.teaching_level.tenant_id != self.tenant_id:
             raise ValidationError({"teaching_level": _("O nível de ensino deve pertencer ao mesmo tenant.")})
+        if self.is_tenant_default and self.units.exists():
+            raise ValidationError(
+                {"units": _("Séries padrão do tenant não devem ter unidades específicas.")}
+            )
 
     def __str__(self):
         return self.name
@@ -206,8 +230,6 @@ class ClassGroup(BaseModel):
             errors["period"] = _("O período deve pertencer ao mesmo tenant.")
         if self.tenant_id and self.series_id and self.series.tenant_id != self.tenant_id:
             errors["series"] = _("A série deve pertencer ao mesmo tenant.")
-        if self.unit_id and self.period_id and self.period.unit_id != self.unit_id:
-            errors["period"] = _("O período deve pertencer à mesma unidade da turma.")
         if errors:
             raise ValidationError(errors)
 
@@ -231,7 +253,12 @@ class SchoolYear(BaseModel):
     year = models.PositiveIntegerField(_("ano"))
     start_date = models.DateField(_("data de início"))
     end_date = models.DateField(_("data de término"))
-    status = models.CharField(_("status"), max_length=20, choices=StatusChoices.choices, default=StatusChoices.DRAFT)
+    status = models.CharField(
+        _("status"),
+        max_length=20,
+        choices=StatusChoices.choices,
+        default=StatusChoices.DRAFT,
+    )
     is_active = models.BooleanField(_("ativo"), default=False)
 
     class Meta:
@@ -239,13 +266,16 @@ class SchoolYear(BaseModel):
         verbose_name_plural = _("anos letivos")
         ordering = ["-year", "name"]
 
-    def clean(self):
-        super().clean()
-        errors = {}
-        if self.start_date and self.end_date and self.start_date > self.end_date:
-            errors["end_date"] = _("A data de término deve ser maior que a data de início.")
-        if errors:
-            raise ValidationError(errors)
-
     def __str__(self):
         return self.name
+
+
+# Auditlog registration — moved from signals.py
+from auditlog.registry import auditlog  # noqa: E402
+
+auditlog.register(Unit)
+auditlog.register(TeachingLevel)
+auditlog.register(Period)
+auditlog.register(Series)
+auditlog.register(ClassGroup)
+auditlog.register(SchoolYear)

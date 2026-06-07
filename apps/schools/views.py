@@ -12,11 +12,32 @@ from .forms import ClassGroupForm, PeriodForm, SeriesForm, TeachingLevelForm, Un
 from .models import ClassGroup, Period, Series, TeachingLevel, Unit
 
 
+class TenantMixin:
+    """Mixin que injeta o tenant do request nos forms e filtra querysets."""
+
+    def get_tenant(self):
+        return self.request.tenant
+
+    def get_queryset(self):
+        return super().get_queryset().filter(tenant=self.get_tenant())
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
+    def form_valid(self, form):
+        # Auto-assign tenant on create
+        if not form.instance.pk:
+            form.instance.tenant = self.get_tenant()
+        return super().form_valid(form)
+
+
 class SchoolsIndexView(LoginRequiredMixin, TemplateView):
     template_name = "schools/index.html"
 
 
-class SchoolEntityListView(LoginRequiredMixin, ListView):
+class SchoolEntityListView(TenantMixin, LoginRequiredMixin, ListView):
     template_name = "schools/entity_list.html"
     context_object_name = "items"
 
@@ -30,7 +51,7 @@ class SchoolEntityListView(LoginRequiredMixin, ListView):
         return context
 
 
-class SchoolEntityCreateView(LoginRequiredMixin, CreateView):
+class SchoolEntityCreateView(TenantMixin, LoginRequiredMixin, CreateView):
     template_name = "schools/entity_form.html"
 
     def get_context_data(self, **kwargs):
@@ -40,7 +61,7 @@ class SchoolEntityCreateView(LoginRequiredMixin, CreateView):
         return context
 
 
-class SchoolEntityUpdateView(LoginRequiredMixin, UpdateView):
+class SchoolEntityUpdateView(TenantMixin, LoginRequiredMixin, UpdateView):
     template_name = "schools/entity_form.html"
 
     def get_context_data(self, **kwargs):
@@ -50,7 +71,7 @@ class SchoolEntityUpdateView(LoginRequiredMixin, UpdateView):
         return context
 
 
-class SchoolEntityDeleteView(LoginRequiredMixin, DeleteView):
+class SchoolEntityDeleteView(TenantMixin, LoginRequiredMixin, DeleteView):
     template_name = "schools/entity_confirm_delete.html"
 
     def get_context_data(self, **kwargs):
@@ -60,9 +81,12 @@ class SchoolEntityDeleteView(LoginRequiredMixin, DeleteView):
         return context
 
 
+# ── Unit ──────────────────────────────────────────────────────────
+
+
 class UnitListView(SchoolEntityListView):
     model = Unit
-    create_url_name = "schools:unit-create"
+    create_url_name = "schools:unit-list"
 
 
 class UnitCreateView(SchoolEntityCreateView):
@@ -85,9 +109,12 @@ class UnitDeleteView(SchoolEntityDeleteView):
     list_url_name = "schools:unit-list"
 
 
+# ── TeachingLevel ─────────────────────────────────────────────────
+
+
 class TeachingLevelListView(SchoolEntityListView):
     model = TeachingLevel
-    create_url_name = "schools:teachinglevel-create"
+    create_url_name = "schools:teachinglevel-list"
 
 
 class TeachingLevelCreateView(SchoolEntityCreateView):
@@ -110,9 +137,15 @@ class TeachingLevelDeleteView(SchoolEntityDeleteView):
     list_url_name = "schools:teachinglevel-list"
 
 
+# ── Period ────────────────────────────────────────────────────────
+
+
 class PeriodListView(SchoolEntityListView):
     model = Period
-    create_url_name = "schools:period-create"
+    create_url_name = "schools:period-list"
+
+    def get_queryset(self):
+        return super().get_queryset().prefetch_related("units")
 
 
 class PeriodCreateView(SchoolEntityCreateView):
@@ -121,12 +154,22 @@ class PeriodCreateView(SchoolEntityCreateView):
     success_url = reverse_lazy("schools:period-list")
     list_url_name = "schools:period-list"
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
 
 class PeriodUpdateView(SchoolEntityUpdateView):
     model = Period
     form_class = PeriodForm
     success_url = reverse_lazy("schools:period-list")
     list_url_name = "schools:period-list"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
 
 
 class PeriodDeleteView(SchoolEntityDeleteView):
@@ -135,9 +178,15 @@ class PeriodDeleteView(SchoolEntityDeleteView):
     list_url_name = "schools:period-list"
 
 
+# ── Series ─────────────────────────────────────────────────────────
+
+
 class SeriesListView(SchoolEntityListView):
     model = Series
-    create_url_name = "schools:series-create"
+    create_url_name = "schools:series-list"
+
+    def get_queryset(self):
+        return super().get_queryset().prefetch_related("units")
 
 
 class SeriesCreateView(SchoolEntityCreateView):
@@ -146,12 +195,22 @@ class SeriesCreateView(SchoolEntityCreateView):
     success_url = reverse_lazy("schools:series-list")
     list_url_name = "schools:series-list"
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
 
 class SeriesUpdateView(SchoolEntityUpdateView):
     model = Series
     form_class = SeriesForm
     success_url = reverse_lazy("schools:series-list")
     list_url_name = "schools:series-list"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
 
 
 class SeriesDeleteView(SchoolEntityDeleteView):
@@ -160,9 +219,12 @@ class SeriesDeleteView(SchoolEntityDeleteView):
     list_url_name = "schools:series-list"
 
 
+# ── ClassGroup ────────────────────────────────────────────────────
+
+
 class ClassGroupListView(SchoolEntityListView):
     model = ClassGroup
-    create_url_name = "schools:classgroup-create"
+    create_url_name = "schools:classgroup-list"
 
 
 class ClassGroupCreateView(SchoolEntityCreateView):

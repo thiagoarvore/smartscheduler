@@ -59,6 +59,7 @@ SHARED_APPS = [
     "django.contrib.staticfiles",
     "auditlog",
     "django_base_kit",
+    "widget_tweaks",
     "apps.tenants.apps.TenantsConfig",
     "apps.accounts.apps.AccountsConfig",
 ]
@@ -70,6 +71,7 @@ TENANT_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "widget_tweaks",
     "apps.schools.apps.SchoolsConfig",
     "apps.curriculum.apps.CurriculumConfig",
     "apps.people.apps.PeopleConfig",
@@ -101,12 +103,15 @@ TEMPLATES = [
         "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
-            "context_processors": [
-                "django.template.context_processors.request",
-                "django.contrib.auth.context_processors.auth",
-                "django.contrib.messages.context_processors.messages",
-            ],
-        },
+                        "context_processors": [
+                            "django.template.context_processors.request",
+                            "django.contrib.auth.context_processors.auth",
+                            "django.contrib.messages.context_processors.messages",
+                        ],
+                        "builtins": [
+                            "widget_tweaks.templatetags.widget_tweaks",
+                        ],
+                    },
     },
 ]
 

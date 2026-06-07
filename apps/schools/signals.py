@@ -1,9 +1,2 @@
-from auditlog.registry import auditlog
-
-from .models import ClassGroup, Period, Series, TeachingLevel, Unit
-
-auditlog.register(Unit)
-auditlog.register(TeachingLevel)
-auditlog.register(Period)
-auditlog.register(Series)
-auditlog.register(ClassGroup)
+# Auditlog registrations have been moved to models.py
+# This file is kept for future signal-based logic only.

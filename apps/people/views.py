@@ -12,11 +12,32 @@ from .forms import TeacherAvailabilityForm, TeacherForm, TeacherQualificationFor
 from .models import Teacher, TeacherAvailability, TeacherQualification
 
 
+class TenantMixin:
+    """Mixin que injeta o tenant do request nos forms e filtra querysets."""
+
+    def get_tenant(self):
+        return self.request.tenant
+
+    def get_queryset(self):
+        return super().get_queryset().filter(tenant=self.get_tenant())
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
+    def form_valid(self, form):
+        # Auto-assign tenant on create
+        if not form.instance.pk:
+            form.instance.tenant = self.get_tenant()
+        return super().form_valid(form)
+
+
 class PeopleIndexView(LoginRequiredMixin, TemplateView):
     template_name = "people/index.html"
 
 
-class PeopleEntityListView(LoginRequiredMixin, ListView):
+class PeopleEntityListView(TenantMixin, LoginRequiredMixin, ListView):
     template_name = "schools/entity_list.html"
     context_object_name = "items"
 
@@ -30,7 +51,7 @@ class PeopleEntityListView(LoginRequiredMixin, ListView):
         return context
 
 
-class PeopleEntityCreateView(LoginRequiredMixin, CreateView):
+class PeopleEntityCreateView(TenantMixin, LoginRequiredMixin, CreateView):
     template_name = "schools/entity_form.html"
 
     def get_context_data(self, **kwargs):
@@ -40,7 +61,7 @@ class PeopleEntityCreateView(LoginRequiredMixin, CreateView):
         return context
 
 
-class PeopleEntityUpdateView(LoginRequiredMixin, UpdateView):
+class PeopleEntityUpdateView(TenantMixin, LoginRequiredMixin, UpdateView):
     template_name = "schools/entity_form.html"
 
     def get_context_data(self, **kwargs):
@@ -50,7 +71,7 @@ class PeopleEntityUpdateView(LoginRequiredMixin, UpdateView):
         return context
 
 
-class PeopleEntityDeleteView(LoginRequiredMixin, DeleteView):
+class PeopleEntityDeleteView(TenantMixin, LoginRequiredMixin, DeleteView):
     template_name = "schools/entity_confirm_delete.html"
 
     def get_context_data(self, **kwargs):
@@ -60,9 +81,12 @@ class PeopleEntityDeleteView(LoginRequiredMixin, DeleteView):
         return context
 
 
+# ── Teacher ─────────────────────────────────────────────────────────
+
+
 class TeacherListView(PeopleEntityListView):
     model = Teacher
-    create_url_name = "people:teacher-create"
+    create_url_name = "people:teacher-list"
 
 
 class TeacherCreateView(PeopleEntityCreateView):
@@ -85,9 +109,12 @@ class TeacherDeleteView(PeopleEntityDeleteView):
     list_url_name = "people:teacher-list"
 
 
+# ── TeacherQualification ─────────────────────────────────────────────
+
+
 class TeacherQualificationListView(PeopleEntityListView):
     model = TeacherQualification
-    create_url_name = "people:teacherqualification-create"
+    create_url_name = "people:teacherqualification-list"
 
 
 class TeacherQualificationCreateView(PeopleEntityCreateView):
@@ -110,9 +137,12 @@ class TeacherQualificationDeleteView(PeopleEntityDeleteView):
     list_url_name = "people:teacherqualification-list"
 
 
+# ── TeacherAvailability ──────────────────────────────────────────────
+
+
 class TeacherAvailabilityListView(PeopleEntityListView):
     model = TeacherAvailability
-    create_url_name = "people:teacheravailability-create"
+    create_url_name = "people:teacheravailability-list"
 
 
 class TeacherAvailabilityCreateView(PeopleEntityCreateView):
