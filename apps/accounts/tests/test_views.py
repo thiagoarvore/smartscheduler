@@ -16,6 +16,13 @@ class TestLoginView:
         assert response.status_code == 200
         assert "Grade Certa" in response.content.decode()
 
+    def test_login_page_uses_email_field(self):
+        client = Client()
+        response = client.get(reverse("login"))
+        body = response.content.decode()
+        assert 'name="email"' in body
+        assert 'id="id_email"' in body
+
     def test_login_with_valid_credentials(self):
         User.objects.create_user(
             username="testuser",
@@ -25,7 +32,7 @@ class TestLoginView:
         client = Client()
         response = client.post(
             reverse("login"),
-            {"username": "login@gradecerta.com", "password": "testpass12345"},
+            {"email": "login@gradecerta.com", "password": "testpass12345"},
         )
         assert response.status_code == 302
         assert response.url == "/dashboard/"

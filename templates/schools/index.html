@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Grade Certa — Estrutura escolar{% endblock %}
+
+{% block body %}
+<main class="page-content">
+    <div class="container">
+        <div class="card">
+            <div class="card__header">
+                <h1 class="card__title">Estrutura escolar</h1>
+            </div>
+            <p class="text-muted">Cadastre unidades, níveis, períodos, séries e turmas.</p>
+            <ul>
+                <li><a href="{% url 'schools:unit-list' %}">Unidades</a></li>
+                <li><a href="{% url 'schools:teachinglevel-list' %}">Níveis de ensino</a></li>
+                <li><a href="{% url 'schools:period-list' %}">Períodos</a></li>
+                <li><a href="{% url 'schools:series-list' %}">Séries</a></li>
+                <li><a href="{% url 'schools:classgroup-list' %}">Turmas</a></li>
+            </ul>
+        </div>
+    </div>
+</main>
+{% endblock %}

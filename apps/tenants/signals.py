@@ -12,7 +12,7 @@ def create_demo_tenant_on_post_migrate(sender, app_config, **kwargs):
         return
     if not settings.DEMO_TENANT_ENABLED:
         return
-    if not hasattr(connection, "tenant"):
+    if getattr(connection, "schema_name", None) != "public":
         return
 
     ensure_demo_tenant()

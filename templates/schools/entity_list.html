@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Grade Certa — {{ model_verbose_name|title }}s{% endblock %}
+
+{% block body %}
+<main class="page-content">
+    <div class="container">
+        <div class="card">
+            <div class="card__header">
+                <h1 class="card__title">{{ model_verbose_name|title }}s</h1>
+                <a href="{% url create_url_name %}">Novo cadastro</a>
+            </div>
+
+            {% if items %}
+                <ul>
+                    {% for item in items %}
+                        <li>
+                            {{ item }}
+                            [<a href="{% url update_url_name item.pk %}">editar</a>]
+                            [<a href="{% url delete_url_name item.pk %}">excluir</a>]
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Nenhum registro encontrado.</p>
+            {% endif %}
+        </div>
+    </div>
+</main>
+{% endblock %}
