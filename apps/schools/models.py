@@ -213,3 +213,39 @@ class ClassGroup(BaseModel):
 
     def __str__(self):
         return self.name
+
+
+class SchoolYear(BaseModel):
+    class StatusChoices(models.TextChoices):
+        DRAFT = "draft", _("Rascunho")
+        ACTIVE = "active", _("Ativo")
+        ARCHIVED = "archived", _("Arquivado")
+
+    tenant = models.ForeignKey(
+        "tenants.Tenant",
+        on_delete=models.CASCADE,
+        related_name="school_years",
+        verbose_name=_("tenant"),
+    )
+    name = models.CharField(_("nome"), max_length=200)
+    year = models.PositiveIntegerField(_("ano"))
+    start_date = models.DateField(_("data de início"))
+    end_date = models.DateField(_("data de término"))
+    status = models.CharField(_("status"), max_length=20, choices=StatusChoices.choices, default=StatusChoices.DRAFT)
+    is_active = models.BooleanField(_("ativo"), default=False)
+
+    class Meta:
+        verbose_name = _("ano letivo")
+        verbose_name_plural = _("anos letivos")
+        ordering = ["-year", "name"]
+
+    def clean(self):
+        super().clean()
+        errors = {}
+        if self.start_date and self.end_date and self.start_date > self.end_date:
+            errors["end_date"] = _("A data de término deve ser maior que a data de início.")
+        if errors:
+            raise ValidationError(errors)
+
+    def __str__(self):
+        return self.name
