@@ -2,29 +2,57 @@
 
 {% block title %}Grade Certa — {{ model_verbose_name|title }}s{% endblock %}
 
-{% block body %}
-<main class="page-content">
-    <div class="container">
-        <div class="card">
-            <div class="card__header">
-                <h1 class="card__title">{{ model_verbose_name|title }}s</h1>
-                <a href="{% url create_url_name %}">Novo cadastro</a>
-            </div>
+{% block page_content %}
+<div class="page-header mb-6">
+    <h1 class="page-title">{{ model_verbose_name|title }}s</h1>
+</div>
 
-            {% if items %}
-                <ul>
-                    {% for item in items %}
-                        <li>
-                            {{ item }}
-                            [<a href="{% url update_url_name item.pk %}">editar</a>]
-                            [<a href="{% url delete_url_name item.pk %}">excluir</a>]
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>Nenhum registro encontrado.</p>
-            {% endif %}
-        </div>
+<div class="card">
+    <div class="card__header">
+        <h2 class="card__title">Listagem</h2>
+        <a href="{% url create_url_name %}" class="btn btn--primary btn--sm">
+            + Novo cadastro
+        </a>
     </div>
-</main>
+
+    {% if items %}
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Código</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td><strong>{{ item }}</strong></td>
+                    <td class="text-muted">{{ item.code|default:"—" }}</td>
+                    <td>
+                        {% if item.status == 'active' %}
+                        <span class="badge badge--secondary">Ativo</span>
+                        {% else %}
+                        <span class="badge badge--muted">Inativo</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-nowrap">
+                        <a href="{% url update_url_name item.pk %}" class="btn btn--outline btn--sm">Editar</a>
+                        <a href="{% url delete_url_name item.pk %}" class="btn btn--ghost btn--sm" style="color: var(--color-danger);">Excluir</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state__icon">📋</div>
+        <div class="empty-state__title">Nenhum registro encontrado</div>
+        <div class="empty-state__text">Clique em "Novo cadastro" para criar o primeiro registro.</div>
+    </div>
+    {% endif %}
+</div>
 {% endblock %}

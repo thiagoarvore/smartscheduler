@@ -2,28 +2,71 @@
 
 {% block title %}Grade Certa — Dashboard{% endblock %}
 
-{% block body %}
-<nav class="navbar">
-    <a href="{% url 'landing' %}" class="navbar__brand">
-        <span class="navbar__mark">GC</span>
-        Grade <span style="color: var(--color-primary);">Certa</span>
-    </a>
-    <div class="navbar__actions">
-        <span class="text-muted">{{ user.first_name|default:user.email }}</span>
-        <a href="{% url 'logout' %}" class="btn btn--ghost btn--sm">Sair</a>
-    </div>
-</nav>
+{% block page_content %}
+<div class="page-header mb-6">
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-subtitle text-muted">Bem-vindo, {{ user.first_name|default:user.email }}. Selecione uma área no menu ao lado.</p>
+</div>
 
-<main class="page-content">
-    <div class="container">
-        <div class="card">
-            <div class="card__header">
-                <h2 class="card__title">Bem-vindo, {{ user.first_name|default:user.email }}!</h2>
-            </div>
-            <p class="text-muted">
-                O tenant de teste está disponível para validar a base da operação e continuar a evolução do Grade Certa.
-            </p>
+<div class="dashboard-grid">
+    <a href="{% url 'schools:unit-list' %}" class="dashboard-card">
+        <div class="dashboard-card__icon dashboard-card__icon--blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         </div>
-    </div>
-</main>
+        <div class="dashboard-card__content">
+            <h3 class="dashboard-card__title">Unidades</h3>
+            <p class="dashboard-card__desc">Gerenciar unidades escolares</p>
+        </div>
+    </a>
+
+    <a href="{% url 'schools:teachinglevel-list' %}" class="dashboard-card">
+        <div class="dashboard-card__icon dashboard-card__icon--teal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        </div>
+        <div class="dashboard-card__content">
+            <h3 class="dashboard-card__title">Níveis de Ensino</h3>
+            <p class="dashboard-card__desc">Educação infantil, fundamental, médio</p>
+        </div>
+    </a>
+
+    <a href="{% url 'schools:period-list' %}" class="dashboard-card">
+        <div class="dashboard-card__icon dashboard-card__icon--purple">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="dashboard-card__content">
+            <h3 class="dashboard-card__title">Períodos</h3>
+            <p class="dashboard-card__desc">Manhã, tarde, noite</p>
+        </div>
+    </a>
+
+    <a href="{% url 'schools:series-list' %}" class="dashboard-card">
+        <div class="dashboard-card__icon dashboard-card__icon--orange">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        </div>
+        <div class="dashboard-card__content">
+            <h3 class="dashboard-card__title">Séries</h3>
+            <p class="dashboard-card__desc">Séries e anos escolares</p>
+        </div>
+    </a>
+
+    <a href="{% url 'schools:classgroup-list' %}" class="dashboard-card">
+        <div class="dashboard-card__icon dashboard-card__icon--green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="dashboard-card__content">
+            <h3 class="dashboard-card__title">Turmas</h3>
+            <p class="dashboard-card__desc">Turmas e grupos de classe</p>
+        </div>
+    </a>
+
+    <a href="{% url 'people:teacher-list' %}" class="dashboard-card">
+        <div class="dashboard-card__icon dashboard-card__icon--blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div class="dashboard-card__content">
+            <h3 class="dashboard-card__title">Professores</h3>
+            <p class="dashboard-card__desc">Cadastro e gestão de professores</p>
+        </div>
+    </a>
+</div>
 {% endblock %}

@@ -4,14 +4,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Grade Certa — Sistema de gestao de grades horarias escolares">
+    <meta name="description" content="Grade Certa — Sistema de gestão de grades horárias escolares">
     <title>{% block title %}Grade Certa{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    {% block body %}
+    {% block navbar %}
+    <nav class="navbar">
+        <a href="{% url 'landing' %}" class="navbar__brand">
+            <span class="navbar__mark">GC</span>
+            Grade <span style="color: var(--color-primary);">Certa</span>
+        </a>
+        <div class="navbar__actions">
+            <span class="text-muted">{{ user.first_name|default:user.email }}</span>
+            <a href="{% url 'logout' %}" class="btn btn--ghost btn--sm">Sair</a>
+        </div>
+    </nav>
     {% endblock %}
+
+    <div class="app-layout">
+        {% block sidebar %}
+        {% include "partials/_sidebar.html" %}
+        {% endblock %}
+
+        <main class="main-content">
+            {% block page_content %}{% endblock %}
+        </main>
+    </div>
 
     {% block extra_js %}{% endblock %}
 </body>

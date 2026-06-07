@@ -2,20 +2,25 @@
 
 {% block title %}Grade Certa — Excluir {{ model_verbose_name|title }}{% endblock %}
 
-{% block body %}
-<main class="page-content">
-    <div class="container">
-        <div class="card">
-            <div class="card__header">
-                <h1 class="card__title">Excluir {{ model_verbose_name|title }}</h1>
-            </div>
-            <p>Confirma a exclusão de <strong>{{ object }}</strong>?</p>
-            <form method="post">
-                {% csrf_token %}
-                <button type="submit">Confirmar exclusão</button>
-                <a href="{% url list_url_name %}">Cancelar</a>
-            </form>
-        </div>
+{% block page_content %}
+<div class="page-header mb-6">
+    <a href="{% url list_url_name %}" class="btn btn--ghost btn--sm mb-4">
+        ← Voltar
+    </a>
+    <h1 class="page-title">Excluir {{ model_verbose_name|title }}</h1>
+</div>
+
+<div class="card" style="max-width: 480px;">
+    <div class="alert alert--danger mb-4">
+        <strong>Atenção:</strong> Esta ação não pode ser desfeita.
     </div>
-</main>
+    <p>Confirma a exclusão de <strong>{{ object }}</strong>?</p>
+    <form method="post" class="form-stack mt-4">
+        {% csrf_token %}
+        <div class="form-actions">
+            <button type="submit" class="btn btn--danger">Confirmar exclusão</button>
+            <a href="{% url list_url_name %}" class="btn btn--ghost">Cancelar</a>
+        </div>
+    </form>
+</div>
 {% endblock %}
