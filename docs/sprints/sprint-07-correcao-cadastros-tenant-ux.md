@@ -45,7 +45,7 @@ Entregar uma versão estável do sistema de cadastros onde:
 
 ### 3.4 Períodos
 
-- relacionamento com unidades改成 ManyToMany;
+- relacionamento com unidades através de ManyToMany;
 - flag `is_tenant_default` para período global;
 - criar períodos globais no nível do tenant;
 - herança automática para unidades novas;
