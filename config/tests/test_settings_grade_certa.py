@@ -31,8 +31,8 @@ class TestCooldownDisabledByEnvironment:
 
 
 class TestSettingsCarregam:
-    def test_time_zone_eh_asia_tokyo(self) -> None:
-        assert settings.TIME_ZONE == "Asia/Tokyo"
+    def test_time_zone_eh_brasil(self) -> None:
+        assert settings.TIME_ZONE == "America/Sao_Paulo"
 
     def test_use_tz_eh_true(self) -> None:
         assert settings.USE_TZ is True

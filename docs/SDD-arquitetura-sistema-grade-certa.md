@@ -992,11 +992,11 @@ GRADE_CERTA_COOLDOWN_DISABLED = ENVIRONMENT in NON_PRODUCTION_ENVIRONMENTS
 **Mensagem de bloqueio ao usuário (quando clica dentro do cooldown):**
 ```
 ⚠️ A geração da grade só pode ser rodada 1x por hora.
-Última execução: hoje 18:42 (Asia/Tokyo).
-Próxima janela: 19:42 (Asia/Tokyo).
+Última execução: hoje 18:42 (America/Sao_Paulo).
+Próxima janela: 19:42 (America/Sao_Paulo).
 ```
 
-**Timezone da mensagem:** `settings.TIME_ZONE` (default `"Asia/Tokyo"`). Vai ser criada a setting `TIME_ZONE` que ainda não existe (Django aceita o default, mas vamos explicitar).
+**Timezone da mensagem:** `settings.TIME_ZONE` (default `"America/Sao_Paulo"`, Brasil — usuário em Tokyo mas sistema segue horário do cliente/escola). Decisão Thiago 13/06/2026.
 
 ### 22.2.5 Retry em falha: 2 tentativas, transientes só
 

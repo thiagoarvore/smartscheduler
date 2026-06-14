@@ -97,7 +97,7 @@ class TestGenerateSolverReportMd:
         content = generate_solver_report_md(school_year, runs)
         assert "# Relatório de Execução do Solver" in content
         assert school_year.name in content
-        assert "JST" in content  # timezone aparece como JST (não Asia/Tokyo) no strftime %Z
+        assert "-03" in content or "-02" in content  # offset numérico do America/Sao_Paulo (BRT/AMT)
 
     def test_marca_vencedor_menor_buracos(self, school_year, runs) -> None:
         content = generate_solver_report_md(school_year, runs)

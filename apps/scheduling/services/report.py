@@ -60,13 +60,13 @@ class LocalUploader:
 
 
 def _ts_jst() -> datetime:
-    """Timestamp atual em JST (Asia/Tokyo)."""
+    """Timestamp atual no timezone do projeto (settings.TIME_ZONE)."""
     tz = ZoneInfo(settings.TIME_ZONE)
     return timezone.now().astimezone(tz)
 
 
 def _ts_filename() -> str:
-    """YYYYMMDD-HHMM formatado em JST."""
+    """YYYYMMDD-HHMM formatado no timezone do projeto."""
     return _ts_jst().strftime("%Y%m%d-%H%M")
 
 
@@ -103,7 +103,7 @@ def generate_solver_report_md(school_year: SchoolYear, runs: list[SolverRun]) ->
         f"# Relatório de Execução do Solver — {school_year.name}",
         "",
         f"- **Escola/Ano letivo**: {school_year.name} ({school_year.year})",
-        f"- **Data/Hora (JST)**: {ts}",
+        f"- **Data/Hora**: {ts}",
         f"- **Tenant ID**: {school_year.tenant_id}",
         f"- **Total de execuções**: {len(runs)}",
         "",
@@ -160,7 +160,7 @@ def generate_grade_md(school_year: SchoolYear, winning_run: SolverRun) -> str:
     lines: list[str] = [
         f"# Grade — {school_year.name}",
         "",
-        f"- **Data/Hora (JST)**: {ts}",
+        f"- **Data/Hora**: {ts}",
         f"- **Total de buracos**: {winning_run.buracos}",
         f"- **Completude**: {winning_run.completude:.2f}" if winning_run.completude is not None else "- **Completude**: —",
         "",

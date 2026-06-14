@@ -81,7 +81,7 @@ Entregar uma versão funcional do sistema de geração de grade horária onde:
 - [ ] Editar `config/settings.py`:
   - Adicionar `NON_PRODUCTION_ENVIRONMENTS = {"local", "dev", "test"}` (preservar `DEVELOPMENT_ENVIRONMENTS` existente)
   - Adicionar `GRADE_CERTA_COOLDOWN_DISABLED = ENVIRONMENT in NON_PRODUCTION_ENVIRONMENTS`
-  - Adicionar `TIME_ZONE = "Asia/Tokyo"` (era default do Django)
+  - Adicionar `TIME_ZONE = "America/Sao_Paulo"` (era default do Django — mudou em 13/06/2026, decisão Thiago)
   - Adicionar `USE_TZ = True`
 - [ ] Testes: setting muda corretamente conforme `ENVIRONMENT`
 
@@ -145,7 +145,7 @@ Entregar uma versão funcional do sistema de geração de grade horária onde:
 - [ ] Decorator `@login_required`
 - [ ] Lógica:
   1. Verifica cooldown: `if last_solver_run_at and (now - last_solver_run_at) < 1h AND NOT GRADE_CERTA_COOLDOWN_DISABLED`
-  2. Se em cooldown: retorna mensagem "⚠️ A geração da grade só pode ser rodada 1x por hora. Última execução: hoje HH:MM (Asia/Tokyo). Próxima janela: HH:MM (Asia/Tokyo)."
+  2. Se em cooldown: retorna mensagem "⚠️ A geração da grade só pode ser rodada 1x por hora. Última execução: hoje HH:MM (America/Sao_Paulo). Próxima janela: HH:MM (America/Sao_Paulo)."
   3. Se liberado: dispara `run_3_variants.delay(school_year_id, 'user', request.user.id)`
   4. Redireciona pra página de progresso
 - [ ] URL: `/scheduling/run/` em `apps/scheduling/urls.py`
@@ -222,7 +222,7 @@ Entregar uma versão funcional do sistema de geração de grade horária onde:
 ### Settings
 17. [ ] Adicionar `NON_PRODUCTION_ENVIRONMENTS` em `settings.py`
 18. [ ] Adicionar `GRADE_CERTA_COOLDOWN_DISABLED` em `settings.py`
-19. [ ] Adicionar `TIME_ZONE = "Asia/Tokyo"` e `USE_TZ = True`
+19. [ ] Adicionar `TIME_ZONE = "America/Sao_Paulo"` e `USE_TZ = True`
 20. [ ] Testes: setting muda por `ENVIRONMENT`
 
 ### Variantes
@@ -266,7 +266,7 @@ Entregar uma versão funcional do sistema de geração de grade horária onde:
 - [ ] Cooldown 1x/hora bloqueia novo POST; `GRADE_CERTA_COOLDOWN_DISABLED=True` libera
 - [ ] Falhas transientes têm 1 retry automático; não-transientes falham direto
 - [ ] Relatórios `relatorio-solver-...md` e `grade-...md` são gerados no Drive após cada execução
-- [ ] Mensagem de bloqueio mostra horário em JST (Asia/Tokyo)
+- [ ] Mensagem de bloqueio mostra horário em BRT (America/Sao_Paulo)
 - [ ] Settings `NON_PRODUCTION_ENVIRONMENTS`, `TIME_ZONE`, `USE_TZ` configurados
 - [ ] Testes cobrem: contratos, models, 3 variantes, retry, views, relatórios
 

@@ -102,7 +102,7 @@ class TestCheckCooldown:
         assert result.pode_rodar is False
         assert result.em_cooldown is True
         assert "1x por hora" in result.mensagem
-        assert "Asia/Tokyo" in result.mensagem
+        assert "America/Sao_Paulo" in result.mensagem
 
     def test_apos_1h_pode_rodar(self, school_year, settings) -> None:
         settings.GRADE_CERTA_COOLDOWN_DISABLED = False
