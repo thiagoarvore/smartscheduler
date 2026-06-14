@@ -3,16 +3,15 @@ from __future__ import annotations
 
 import uuid
 from datetime import timedelta
+from pathlib import Path
 
 import pytest
 
 from apps.scheduling.models import SolverRun, SolverVariant
 from apps.scheduling.services.report import (
-    LocalUploader,
-    filenames_for,
     generate_grade_md,
     generate_solver_report_md,
-    upload_reports,
+    save_reports,
 )
 
 
@@ -97,24 +96,16 @@ class TestGenerateSolverReportMd:
         content = generate_solver_report_md(school_year, runs)
         assert "# Relatório de Execução do Solver" in content
         assert school_year.name in content
-        assert "-03" in content or "-02" in content  # offset numérico do America/Sao_Paulo (BRT/AMT)
+        assert "-03" in content or "-02" in content  # offset numérico do America/Sao_Paulo
 
     def test_marca_vencedor_menor_buracos(self, school_year, runs) -> None:
         content = generate_solver_report_md(school_year, runs)
-        # Vencedor é B (3 buracos)
         assert "B - Hill Climbing" in content
         assert "## 🏆 Variante Vencedora" in content
-        # Tem a tabela comparativa
         assert "| Variante | Buracos | Completude |" in content
-        assert all(
-            f"| {n} " in content
-            for n in ("A - Restart", "B - Hill Climbing", "C - Híbrido")
-        )
 
     def test_ordenado_por_buracos(self, school_year, runs) -> None:
         content = generate_solver_report_md(school_year, runs)
-        # Verifica que a tabela está ordenada: B (3) antes de C (4) antes de A (5).
-        # Pegamos só a parte da tabela (depois de "Comparativo").
         tabela_start = content.index("Comparativo das 3 Variantes")
         tabela = content[tabela_start:]
         idx_b = tabela.index("B - Hill Climbing")
@@ -167,44 +158,34 @@ class TestGenerateGradeMd:
         assert "Nenhuma aula" in content
 
 
-class TestFilenames:
-    def test_formato_correto(self, school_year) -> None:
-        f = filenames_for(school_year)
-        assert f.relatorio.startswith("relatorio-solver-")
-        assert f.relatorio.endswith(".md")
-        assert f.grade.startswith("grade-")
-        assert f.grade.endswith(".md")
+class TestSaveReports:
+    def test_gera_e_salva(self, school_year, runs, tmp_path) -> None:
+        """save_reports gera os 2 arquivos .md em disco."""
+        from apps.scheduling.services import report as report_mod
 
+        # Monkey-patch REPORTS_DIR pro tmp_path
+        original_dir = report_mod.REPORTS_DIR
+        report_mod.REPORTS_DIR = tmp_path
+        try:
+            relatorio_path, grade_path = save_reports(school_year, runs, winning_run=runs[1])
+        finally:
+            report_mod.REPORTS_DIR = original_dir
 
-class TestLocalUploader:
-    def test_upload_cria_arquivo(self, tmp_path) -> None:
-        uploader = LocalUploader(base_dir=str(tmp_path))
-        url = uploader.upload("foo/bar.md", "# Hello")
-        assert "file://" in url
-        assert (tmp_path / "foo" / "bar.md").exists()
-        assert (tmp_path / "foo" / "bar.md").read_text() == "# Hello"
+        assert Path(relatorio_path).exists()
+        assert Path(grade_path).exists()
+        assert "relatorio-solver" in relatorio_path
+        assert "grade-" in grade_path
 
+    def test_falha_nao_propaga(self, school_year, runs, tmp_path) -> None:
+        """Se o disco estiver inacessível, save_reports não levanta."""
+        from apps.scheduling.services import report as report_mod
 
-class TestUploadReports:
-    def test_gera_e_faz_upload(self, school_year, runs, tmp_path) -> None:
-        uploader = LocalUploader(base_dir=str(tmp_path))
-        filenames = upload_reports(
-            school_year, runs, winning_run=runs[1], uploader=uploader
-        )
-        assert (tmp_path / filenames.relatorio).exists() or any(
-            (tmp_path).rglob(filenames.relatorio)
-        )
-        # Pelo menos 1 arquivo com nome similar existe
-        found = list(tmp_path.rglob(filenames.relatorio))
-        assert len(found) == 1
+        report_mod.REPORTS_DIR = Path("/nonexistent/path/that/cannot/be/created")
+        try:
+            # Não deve levantar exceção
+            relatorio_path, grade_path = save_reports(school_year, runs, winning_run=runs[1])
+        finally:
+            report_mod.REPORTS_DIR = tmp_path
 
-    def test_falha_upload_nao_propaga(self, school_year, runs) -> None:
-        class BrokenUploader:
-            def upload(self, path, content) -> str:
-                raise RuntimeError("Drive offline")
-
-        # Não deve levantar
-        filenames = upload_reports(
-            school_year, runs, winning_run=runs[1], uploader=BrokenUploader()
-        )
-        assert filenames.relatorio.endswith(".md")
+        # Retorna caminhos mesmo que não salvou
+        assert "relatorio-solver" in relatorio_path

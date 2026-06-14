@@ -1,21 +1,16 @@
-"""Geração de relatórios .md das execuções do solver (Sprint 08 item 3.14, SDD §22.2.7).
+"""Geração de relatórios .md das execuções do solver (Sprint 08, SDD §22.2.7).
 
 Gera 2 artefatos por execução:
-1. `relatorio-solver-{SchoolYear.slug}-{YYYYMMDD-HHMM}.md` — pro Thiago
-2. `grade-{SchoolYear.slug}-{YYYYMMDD-HHMM}.md` — pro usuário final
+1. `relatorio-solver-{slug}-{ts}.md` — pro Thiago
+2. `grade-{slug}-{ts}.md` — pro usuário final
 
-A interface de upload pro Drive é plugável (ver `DriveUploader`).
-A implementação default (`LocalUploader`) salva em
-`./reports/{tenant_slug}/` — útil pra dev/CI. A implementação real
-de Drive fica como stub documentado pra Sprint 09.
+No MVP, salva em disco (`./reports/{tenant}/`). Sprint 09: upload Drive.
 """
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Protocol
 from zoneinfo import ZoneInfo
 
 from django.conf import settings
@@ -26,40 +21,14 @@ from apps.schools.models import SchoolYear
 
 logger = logging.getLogger(__name__)
 
-
-# Uploaders --------------------------------------------------------------
-
-
-class DriveUploader(Protocol):
-    """Interface para upload de relatórios.
-
-    Implementações:
-    - `LocalUploader` (default, dev): salva em `./reports/{tenant_slug}/`
-    - `GoogleDriveUploader` (Sprint 09): sobe pro Drive
-    """
-
-    def upload(self, path: str, content: str) -> str:
-        """Faz upload de `content` e retorna uma URL/identificador."""
-        ...
+# Diretório base pra reports locais (dev/CI).
+REPORTS_DIR = Path("./reports")
 
 
-class LocalUploader:
-    """Uploader que salva em disco. Útil pra dev/CI."""
-
-    def __init__(self, base_dir: str = "./reports") -> None:
-        self.base_dir = Path(base_dir)
-
-    def upload(self, path: str, content: str) -> str:
-        full = self.base_dir / path
-        full.parent.mkdir(parents=True, exist_ok=True)
-        full.write_text(content, encoding="utf-8")
-        return f"file://{full.resolve()}"
+# Helpers -------------------------------------------------------------------
 
 
-# Helpers de formatação -------------------------------------------------
-
-
-def _ts_jst() -> datetime:
+def _now_tz() -> datetime:
     """Timestamp atual no timezone do projeto (settings.TIME_ZONE)."""
     tz = ZoneInfo(settings.TIME_ZONE)
     return timezone.now().astimezone(tz)
@@ -67,7 +36,7 @@ def _ts_jst() -> datetime:
 
 def _ts_filename() -> str:
     """YYYYMMDD-HHMM formatado no timezone do projeto."""
-    return _ts_jst().strftime("%Y%m%d-%H%M")
+    return _now_tz().strftime("%Y%m%d-%H%M")
 
 
 def _format_duration(td) -> str:
@@ -78,18 +47,12 @@ def _format_duration(td) -> str:
     return f"{m}m {s:02d}s"
 
 
-# Geração dos .md -------------------------------------------------------
+# Geração dos .md -----------------------------------------------------------
 
 
 def generate_solver_report_md(school_year: SchoolYear, runs: list[SolverRun]) -> str:
-    """Gera o conteúdo do `relatorio-solver-...md`.
-
-    Estrutura (SDD §22.2.7):
-    1. Cabeçalho: escola, ano, timestamp, tenant, total de aulas
-    2. Variante Vencedora (vencedor pelo critério §22.2.10)
-    3. Tabela comparativa das 3 variantes
-    """
-    ts = _ts_jst().strftime("%Y-%m-%d %H:%M:%S %Z")
+    """Gera o conteúdo do `relatorio-solver-...md`."""
+    ts = _now_tz().strftime("%Y-%m-%d %H:%M:%S %Z")
     runs_sorted = sorted(
         runs,
         key=lambda r: (
@@ -150,13 +113,8 @@ def generate_solver_report_md(school_year: SchoolYear, runs: list[SolverRun]) ->
 
 
 def generate_grade_md(school_year: SchoolYear, winning_run: SolverRun) -> str:
-    """Gera o conteúdo do `grade-...md` (visão do usuário final).
-
-    Estrutura: cabeçalho + grade visual semanal por turma.
-    No MVP, renderiza a grade do `solution_json` (assignments) agrupada
-    por turma × dia × ordem.
-    """
-    ts = _ts_jst().strftime("%Y-%m-%d %H:%M:%S %Z")
+    """Gera o conteúdo do `grade-...md` (visão do usuário final)."""
+    ts = _now_tz().strftime("%Y-%m-%d %H:%M:%S %Z")
     lines: list[str] = [
         f"# Grade — {school_year.name}",
         "",
@@ -175,7 +133,6 @@ def generate_grade_md(school_year: SchoolYear, winning_run: SolverRun) -> str:
         lines.append("_Nenhuma aula alocada._")
         return "\n".join(lines) + "\n"
 
-    # Agrupa por (class_group_id, weekday, order)
     by_class: dict[str, dict[str, dict[int, str]]] = {}
     for a in assignments:
         cg = a["class_group_id"]
@@ -203,63 +160,40 @@ def generate_grade_md(school_year: SchoolYear, winning_run: SolverRun) -> str:
     return "\n".join(lines) + "\n"
 
 
-# Pipeline de upload ----------------------------------------------------
+# Pipeline de salvamento ----------------------------------------------------
 
 
-@dataclass(frozen=True)
-class ReportFilenames:
-    """Nomes dos arquivos gerados para uma execução."""
-
-    relatorio: str
-    grade: str
-
-
-def filenames_for(school_year: SchoolYear) -> ReportFilenames:
-    """Gera os nomes dos 2 .md pra uma execução."""
-    ts = _ts_filename()
-    sy_slug = school_year.name.lower().replace(" ", "-")
-    return ReportFilenames(
-        relatorio=f"relatorio-solver-{sy_slug}-{ts}.md",
-        grade=f"grade-{sy_slug}-{ts}.md",
-    )
+def _save_report(path: Path, content: str) -> str:
+    """Salva conteúdo em disco. Retorna a URI do arquivo."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+    return f"file://{path.resolve()}"
 
 
-def upload_reports(
-    school_year: SchoolYear,
-    runs: list[SolverRun],
-    winning_run: SolverRun,
-    uploader: DriveUploader | None = None,
-) -> ReportFilenames:
-    """Gera os 2 .md e faz upload via `uploader`.
-
-    Args:
-        uploader: Implementação de `DriveUploader`. Se None, usa `LocalUploader`.
+def save_reports(school_year: SchoolYear, runs: list[SolverRun], winning_run: SolverRun) -> tuple[str, str]:
+    """Gera os 2 .md e salva em `./reports/{tenant}/`.
 
     Returns:
-        Nomes dos arquivos gerados.
+        (relatorio_path, grade_path) — caminhos dos arquivos salvos.
     """
-    if uploader is None:
-        uploader = LocalUploader()
+    ts = _ts_filename()
+    sy_slug = school_year.name.lower().replace(" ", "-")
+    tenant_slug = str(school_year.tenant_id)[:8] if school_year.tenant_id else "default"
 
-    filenames = filenames_for(school_year)
-    tenant_slug = (
-        str(school_year.tenant_id)[:8]
-        if school_year.tenant_id
-        else "default"
-    )
+    relatorio_filename = f"relatorio-solver-{sy_slug}-{ts}.md"
+    grade_filename = f"grade-{sy_slug}-{ts}.md"
 
     relatorio_content = generate_solver_report_md(school_year, runs)
     grade_content = generate_grade_md(school_year, winning_run)
 
-    relatorio_path = f"{tenant_slug}/relatorios-solver/{filenames.relatorio}"
-    grade_path = f"{tenant_slug}/grades-geradas/{filenames.grade}"
+    relatorio_path = REPORTS_DIR / tenant_slug / "relatorios-solver" / relatorio_filename
+    grade_path = REPORTS_DIR / tenant_slug / "grades-geradas" / grade_filename
 
     try:
-        uploader.upload(relatorio_path, relatorio_content)
-        uploader.upload(grade_path, grade_content)
-        logger.info("Reports uploaded: %s, %s", filenames.relatorio, filenames.grade)
-    except Exception as exc:
-        # Falha de upload não derruba o pipeline (§22.2.7)
-        logger.exception("Falha no upload de relatórios: %s", exc)
+        _save_report(relatorio_path, relatorio_content)
+        _save_report(grade_path, grade_content)
+        logger.info("Reports saved: %s, %s", relatorio_path, grade_path)
+    except Exception:
+        logger.exception("Falha ao salvar relatórios")
 
-    return filenames
+    return str(relatorio_path), str(grade_path)
