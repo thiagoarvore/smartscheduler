@@ -17,8 +17,11 @@ class TestSettings:
     def test_language_code(self, settings):
         assert settings.LANGUAGE_CODE == "pt-br"
 
-    def test_timezone(self, settings):
-        assert settings.TIME_ZONE == "America/Sao_Paulo"
+    def test_timezone(self, settings) -> None:
+        # Asia/Tokyo é o timezone do projeto (Thiago mora em Tokyo).
+        # Sprint 08 §22.2.4 oficializou essa decisão. Se mudar,
+        # atualize este teste E a documentação de §22.2.4 em paralelo.
+        assert settings.TIME_ZONE == "Asia/Tokyo"
 
     def test_shared_apps_contains_tenants_and_accounts(self, settings):
         assert "apps.tenants.apps.TenantsConfig" in settings.SHARED_APPS

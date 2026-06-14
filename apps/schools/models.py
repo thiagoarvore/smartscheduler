@@ -260,6 +260,15 @@ class SchoolYear(BaseModel):
         default=StatusChoices.DRAFT,
     )
     is_active = models.BooleanField(_("ativo"), default=False)
+    last_solver_run_at = models.DateTimeField(
+        _("última execução do solver"),
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text=_(
+            "Cooldown: 1 execução por hora (desativado em local/dev/test). Ver SDD §22.2.4."
+        ),
+    )
 
     class Meta:
         verbose_name = _("ano letivo")

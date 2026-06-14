@@ -632,3 +632,267 @@ def _teacher_can_teach_assignment(assignment: LessonAssignment) -> bool:
     ).filter(
         models.Q(series=assignment.class_group.series) | models.Q(series__isnull=True)
     ).exists()
+
+
+# Sprint 08 — Solver (SDD §22.1, §22.2.1)
+# -----------------------------------------------------------------------
+
+
+class SolverVariant(BaseModel):
+    """Uma variante do solver (A, B ou C) que pode ser executada.
+
+    As 3 variantes coexistem com `is_active=True` durante a fase de
+    experimentação. "Melhor" não é mutação — é cálculo sobre `SolverRun`
+    (menor nº de buracos, desempate por tempo total). Ver §22.1.
+    """
+
+    class NomeChoices(models.TextChoices):
+        A_RESTART = "A-Restart", _("A - Restart")
+        B_HILL_CLIMBING = "B-HillClimbing", _("B - Hill Climbing")
+        C_HYBRID = "C-Hybrid", _("C - Híbrido")
+
+    tenant = models.ForeignKey(
+        "tenants.Tenant",
+        on_delete=models.CASCADE,
+        related_name="solver_variants",
+        verbose_name=_("tenant"),
+    )
+    school_year = models.ForeignKey(
+        SchoolYear,
+        on_delete=models.CASCADE,
+        related_name="solver_variants",
+        verbose_name=_("ano letivo"),
+        null=True,
+        blank=True,
+        help_text=_("Se vazio, a variante é global (todos os anos letivos do tenant)."),
+    )
+    nome = models.CharField(
+        _("nome"),
+        max_length=30,
+        choices=NomeChoices.choices,
+    )
+    descricao = models.TextField(
+        _("descrição"),
+        blank=True,
+        default="",
+    )
+    is_active = models.BooleanField(
+        _("ativa"),
+        default=True,
+        help_text=_("Variantes inativas não são executadas pelo pipeline."),
+    )
+    parametros = models.JSONField(
+        _("parâmetros"),
+        default=dict,
+        blank=True,
+        help_text=_(
+            "Parâmetros da variante: seed, timeout, max_restarts, max_construcoes, etc."
+        ),
+    )
+
+    class Meta:
+        verbose_name = _("variante do solver")
+        verbose_name_plural = _("variantes do solver")
+        ordering = ["nome"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant", "school_year", "nome"],
+                name="unique_solver_variant_per_scope",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        scope = self.school_year.name if self.school_year_id else "global"
+        return f"{self.get_nome_display()} ({scope})"
+
+    def clean(self) -> None:
+        super().clean()
+        errors: dict[str, str] = {}
+        if (
+            self.tenant_id
+            and self.school_year_id
+            and self.school_year.tenant_id != self.tenant_id
+        ):
+            errors["school_year"] = _("O ano letivo deve pertencer ao mesmo tenant.")
+        if errors:
+            raise ValidationError(errors)
+
+
+class SolverRun(BaseModel):
+    """Uma execução de uma variante do solver.
+
+    Cada chamada a `Solver.solve()` gera um registro aqui. Persiste
+    as 8 métricas de §22.2.9 + 2 de suggestions (Sprint 09) +
+    1 de report upload (Sprint 09).
+    """
+
+    class StatusChoices(models.TextChoices):
+        RUNNING = "running", _("Rodando")
+        SUCCESS = "success", _("Sucesso")
+        FAILED = "failed", _("Falhou")
+        INTERRUPTED = "interrupted", _("Interrompida")
+
+    class CriterioParadaChoices(models.TextChoices):
+        TIMEOUT = "timeout", _("Timeout")
+        ZERO_BURACOS = "zero_buracos", _("Zero buracos")
+        ERRO = "erro", _("Erro")
+        INTERRUPTED = "interrupted", _("Interrompido")
+
+    class DisparadoPorChoices(models.TextChoices):
+        USER = "user", _("Usuário")
+        CRON = "cron", _("Cron")
+        API = "api", _("API")
+
+    class SuggestionsStatusChoices(models.TextChoices):
+        NOT_RUN = "not_run", _("Não executada")
+        RUNNING = "running", _("Rodando")
+        DONE = "done", _("Concluída")
+        TIMEOUT = "timeout", _("Timeout")
+        DISABLED = "disabled", _("Desativada")
+        FAILED = "failed", _("Falhou")
+
+    class ReportUploadStatusChoices(models.TextChoices):
+        PENDING = "pending", _("Pendente")
+        SUCCESS = "success", _("Sucesso")
+        FAILED = "failed", _("Falhou")
+        DISABLED = "disabled", _("Desativada")
+
+    tenant = models.ForeignKey(
+        "tenants.Tenant",
+        on_delete=models.CASCADE,
+        related_name="solver_runs",
+        verbose_name=_("tenant"),
+    )
+    variant = models.ForeignKey(
+        SolverVariant,
+        on_delete=models.PROTECT,
+        related_name="runs",
+        verbose_name=_("variante"),
+    )
+    school_year = models.ForeignKey(
+        SchoolYear,
+        on_delete=models.CASCADE,
+        related_name="solver_runs",
+        verbose_name=_("ano letivo"),
+    )
+    started_at = models.DateTimeField(_("início"), null=True, blank=True)
+    finished_at = models.DateTimeField(_("término"), null=True, blank=True)
+    status = models.CharField(
+        _("status"),
+        max_length=20,
+        choices=StatusChoices.choices,
+        default=StatusChoices.RUNNING,
+    )
+    # 8 métricas (§22.2.9)
+    buracos = models.PositiveIntegerField(_("buracos"), null=True, blank=True)
+    completude = models.FloatField(
+        _("completude"),
+        null=True,
+        blank=True,
+        help_text=_("Fração 0.0–1.0 de aulas alocadas."),
+    )
+    tempo_ate_1a_solucao = models.DurationField(
+        _("tempo até 1ª solução"),
+        null=True,
+        blank=True,
+    )
+    tempo_total = models.DurationField(_("tempo total"), null=True, blank=True)
+    iteracoes = models.PositiveIntegerField(_("iterações"), default=0)
+    restarts = models.PositiveIntegerField(_("restarts"), default=0)
+    criterio_parada = models.CharField(
+        _("critério de parada"),
+        max_length=20,
+        choices=CriterioParadaChoices.choices,
+        null=True,
+        blank=True,
+    )
+    seed = models.PositiveIntegerField(_("seed"), default=0)
+    solution_json = models.JSONField(
+        _("solução"),
+        null=True,
+        blank=True,
+        help_text=_("Solution serializada via to_dict(). Pode ser grande."),
+    )
+    error_message = models.TextField(_("mensagem de erro"), blank=True, default="")
+    disparado_por = models.CharField(
+        _("disparado por"),
+        max_length=10,
+        choices=DisparadoPorChoices.choices,
+        default=DisparadoPorChoices.USER,
+    )
+    disparado_por_user = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        related_name="solver_runs",
+        verbose_name=_("usuário"),
+        null=True,
+        blank=True,
+    )
+    # Suggestions layer (Sprint 09)
+    suggestions_status = models.CharField(
+        _("status das sugestões"),
+        max_length=15,
+        choices=SuggestionsStatusChoices.choices,
+        default=SuggestionsStatusChoices.NOT_RUN,
+    )
+    suggestions_count = models.PositiveIntegerField(
+        _("nº de sugestões"),
+        default=0,
+    )
+    # Drive upload (Sprint 09)
+    report_upload_status = models.CharField(
+        _("status do upload do relatório"),
+        max_length=10,
+        choices=ReportUploadStatusChoices.choices,
+        default=ReportUploadStatusChoices.PENDING,
+    )
+
+    class Meta:
+        verbose_name = _("execução do solver")
+        verbose_name_plural = _("execuções do solver")
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["school_year", "-created_at"]),
+            models.Index(fields=["variant", "-created_at"]),
+            models.Index(fields=["tenant", "-created_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.variant.nome} @ {self.school_year.name} — {self.get_status_display()}"
+
+    def clean(self) -> None:
+        super().clean()
+        errors: dict[str, str] = {}
+        if self.tenant_id and self.school_year_id and self.school_year.tenant_id != self.tenant_id:
+            errors["school_year"] = _("O ano letivo deve pertencer ao mesmo tenant.")
+        if (
+            self.tenant_id
+            and self.variant_id
+            and self.variant.tenant_id != self.tenant_id
+        ):
+            errors["variant"] = _("A variante deve pertencer ao mesmo tenant.")
+        if self.completude is not None and not 0.0 <= self.completude <= 1.0:
+            errors["completude"] = _("completude deve estar em [0, 1].")
+        if errors:
+            raise ValidationError(errors)
+
+    @property
+    def is_running(self) -> bool:
+        return self.status == self.StatusChoices.RUNNING
+
+    @property
+    def is_terminal(self) -> bool:
+        return self.status in {
+            self.StatusChoices.SUCCESS,
+            self.StatusChoices.FAILED,
+            self.StatusChoices.INTERRUPTED,
+        }
+
+
+# Auditlog registration (Sprint 08)
+# -----------------------------------------------------------------------
+
+from auditlog.registry import auditlog  # noqa: E402
+
+auditlog.register(SolverVariant)
+auditlog.register(SolverRun)

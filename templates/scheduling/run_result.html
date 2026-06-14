@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Resultado — {{ school_year.name }}{% endblock %}
+
+{% block page_content %}
+<div class="run-result">
+    <h1>Resultado da geração — {{ school_year.name }}</h1>
+
+    {% if winning_run %}
+    <section class="winning-run">
+        <h2>🏆 Variante Vencedora: {{ winning_run.variant.get_nome_display }}</h2>
+        <ul>
+            <li><strong>Buracos:</strong> {{ winning_run.buracos }}</li>
+            <li><strong>Completude:</strong> {{ winning_run.completude|floatformat:2 }}</li>
+            <li><strong>Tempo total:</strong> {{ winning_run.tempo_total.total_seconds|floatformat:1 }}s</li>
+            <li><strong>Critério de parada:</strong> {{ winning_run.get_criterio_parada_display|default:"—" }}</li>
+        </ul>
+        <p>
+            <a href="#" class="btn btn-primary disabled" aria-disabled="true"
+               title="Previsto pra sprint futura">📥 Baixar grade completa (.xlsx)</a>
+            <small>(botão placeholder — Sprint futura)</small>
+        </p>
+    </section>
+
+    <section class="all-runs">
+        <h3>Comparativo das 3 variantes</h3>
+        <table class="runs-table">
+            <thead>
+                <tr>
+                    <th>Variante</th>
+                    <th>Buracos</th>
+                    <th>Completude</th>
+                    <th>Tempo total</th>
+                    <th>Iterações</th>
+                    <th>Restarts</th>
+                    <th>Critério</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for run in runs %}
+                <tr {% if run == winning_run %}class="winner"{% endif %}>
+                    <td>{{ run.variant.get_nome_display }}</td>
+                    <td>{{ run.buracos }}</td>
+                    <td>{{ run.completude|floatformat:2 }}</td>
+                    <td>{{ run.tempo_total.total_seconds|floatformat:1 }}s</td>
+                    <td>{{ run.iteracoes }}</td>
+                    <td>{{ run.restarts }}</td>
+                    <td>{{ run.get_criterio_parada_display|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+    {% else %}
+    <p>Nenhuma execução bem-sucedida ainda para este ano letivo.</p>
+    <p><a href="{% url 'scheduling:run-timetable' school_year.id %}" class="btn btn-primary">🚀 Rodar Grade Certa</a></p>
+    {% endif %}
+</div>
+{% endblock %}

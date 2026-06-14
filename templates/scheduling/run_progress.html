@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Rodar Grade Certa — {{ school_year.name }}{% endblock %}
+
+{% block page_content %}
+<div class="run-progress">
+    <h1>Rodando solver — {{ school_year.name }}</h1>
+    <p>A geração da grade está em andamento. Esta página atualiza sozinha a cada 5 segundos.</p>
+
+    <table class="runs-table">
+        <thead>
+            <tr>
+                <th>Variante</th>
+                <th>Status</th>
+                <th>Buracos</th>
+                <th>Completude</th>
+                <th>Tempo</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for run in runs %}
+            <tr>
+                <td>{{ run.variant.get_nome_display }}</td>
+                <td>
+                    {% if run.is_running %}
+                        🟡 Rodando
+                    {% elif run.status == 'success' %}
+                        ✅ Sucesso
+                    {% elif run.status == 'failed' %}
+                        ❌ Falhou
+                    {% else %}
+                        ⏸️ {{ run.get_status_display }}
+                    {% endif %}
+                </td>
+                <td>{{ run.buracos|default:"—" }}</td>
+                <td>{% if run.completude is not None %}{{ run.completude|floatformat:2 }}{% else %}—{% endif %}</td>
+                <td>{% if run.tempo_total %}{{ run.tempo_total.total_seconds|floatformat:1 }}s{% else %}—{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if all_done %}
+    <p><a href="{% url 'scheduling:run-result' school_year.id %}" class="btn btn-primary">Ver grade vencedora →</a></p>
+    {% else %}
+    <div hx-get="{% url 'scheduling:run-progress' school_year.id %}"
+         hx-trigger="every 5s"
+         hx-swap="outerHTML">
+        Atualizando...
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

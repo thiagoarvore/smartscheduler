@@ -19,6 +19,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 ENVIRONMENT = os.getenv("ENVIRONMENT", config("ENVIRONMENT", default="local")).strip()
 DEVELOPMENT_ENVIRONMENTS = {"local", "dev"}
+NON_PRODUCTION_ENVIRONMENTS = {"local", "dev", "test"}
 
 
 def env_bool(name: str, default: bool) -> bool:
@@ -189,10 +190,17 @@ BASE_KIT = {
 # ---------------------------------------------------------------
 
 LANGUAGE_CODE = "pt-br"
-TIME_ZONE = "America/Sao_Paulo"
+TIME_ZONE = "Asia/Tokyo"
 USE_I18N = True
 USE_THOUSAND_SEPARATOR = True
 USE_TZ = True
+
+# Grade Certa — solver cooldown
+# -----------------------------------------------------------------------
+# Desativado em ambientes não-produção (local, dev, test) para permitir
+# iteração rápida durante desenvolvimento. Em production/staging, mantém
+# cooldown de 1x/hora por SchoolYear. Ver SDD §22.2.4.
+GRADE_CERTA_COOLDOWN_DISABLED = ENVIRONMENT in NON_PRODUCTION_ENVIRONMENTS
 
 # Static files
 # ---------------------------------------------------------------

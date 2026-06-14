@@ -1,13 +1,19 @@
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse_lazy
+from django.http import HttpResponse
+from django.urls import reverse, reverse_lazy
 from django.views.generic import (
     CreateView,
     DeleteView,
+    DetailView,
     ListView,
     TemplateView,
     UpdateView,
+    View,
 )
 
+from apps.scheduling.services.cooldown import check_cooldown
+from apps.scheduling.tasks import run_3_variants
 from apps.schools.models import SchoolYear
 
 from .forms import SchoolYearForm
@@ -85,4 +91,115 @@ class SchoolYearDeleteView(TenantMixin, LoginRequiredMixin, DeleteView):
         context = super().get_context_data(**kwargs)
         context["model_verbose_name"] = self.model._meta.verbose_name
         context["list_url_name"] = "scheduling:schoolyear-list"
+        return context
+
+# Sprint 08 — Solver UI (SDD §22.2.2)
+# -----------------------------------------------------------------------
+
+
+class RunTimetableView(TenantMixin, LoginRequiredMixin, View):
+    """POST /scheduling/run/<school_year_id>/ — dispara a geração.
+
+    Lógica (Sprint 08 item 3.11):
+    1. Verifica cooldown
+    2. Se bloqueado: redireciona com mensagem de erro
+    3. Se liberado: dispara `run_3_variants` (síncrono no MVP)
+    4. Redireciona pra página de progresso
+    """
+
+    def post(self, request, school_year_id) -> HttpResponse:
+        school_year = SchoolYear.objects.filter(
+            id=school_year_id,
+            tenant=self.get_tenant(),
+        ).first()
+        if school_year is None:
+            messages.error(request, "Ano letivo não encontrado.")
+            return HttpResponse(status=404)
+
+        cooldown = check_cooldown(school_year)
+        if not cooldown.pode_rodar:
+            messages.error(request, cooldown.mensagem)
+            return HttpResponse(status=429)  # Too Many Requests — semântica de rate limit
+
+        # Dispara o pipeline (Sprint 08 — síncrono; Sprint 09+ vira Celery)
+        try:
+            run_ids = run_3_variants(
+                school_year_id=str(school_year.id),
+                disparado_por="user",
+                user_id=str(request.user.id) if request.user.is_authenticated else None,
+            )
+        except ValueError as exc:
+            messages.error(request, str(exc))
+            return HttpResponse(status=400)
+        request.session["solver_run_ids"] = run_ids
+        return HttpResponse(
+            status=302,
+            headers={"Location": reverse("scheduling:run-progress", args=[school_year.id])},
+        )
+
+
+class RunProgressView(TenantMixin, LoginRequiredMixin, TemplateView):
+    """GET /scheduling/run/<school_year_id>/progress/ — polling HTMX.
+
+    Mostra o status atual das 3 runs. HTMX dá refresh a cada 5s.
+    Quando todas terminarem, redireciona pra `run-result`.
+    """
+
+    template_name = "scheduling/run_progress.html"
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+        school_year = SchoolYear.objects.get(
+            id=kwargs["school_year_id"],
+            tenant=self.get_tenant(),
+        )
+        run_ids = self.request.session.get("solver_run_ids", [])
+        from .models import SolverRun
+
+        runs = SolverRun.objects.filter(id__in=run_ids).select_related("variant")
+        context["school_year"] = school_year
+        context["runs"] = runs
+        context["all_done"] = all(r.is_terminal for r in runs) if runs else False
+        return context
+
+
+class RunResultViewActual(TenantMixin, LoginRequiredMixin, DetailView):
+    """GET /scheduling/run/<school_year_id>/result/ — grade visual.
+
+    Sprint 08 item 3.13: renderiza a grade semanal da vencedora.
+    Identifica a vencedora como o SolverRun com menor nº de buracos
+    entre os runs da última execução; empate = menor tempo total.
+    """
+
+    template_name = "scheduling/run_result.html"
+    model = SchoolYear
+    slug_field = "id"
+    slug_url_kwarg = "school_year_id"
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+        school_year = self.get_object()
+        from .models import SolverRun
+
+        runs = (
+            SolverRun.objects.filter(
+                school_year=school_year,
+                status=SolverRun.StatusChoices.SUCCESS,
+            )
+            .order_by("created_at")
+            .select_related("variant")
+        )
+        # Critério de vitória (SDD §22.2.10): menos buracos, desempate por tempo
+        runs_list = list(runs)
+        runs_list.sort(
+            key=lambda r: (
+                r.buracos if r.buracos is not None else 999_999,
+                r.tempo_total.total_seconds() if r.tempo_total else 999_999,
+            )
+        )
+        winning_run = runs_list[0] if runs_list else None
+
+        context["school_year"] = school_year
+        context["runs"] = runs_list
+        context["winning_run"] = winning_run
         return context
