@@ -5,7 +5,7 @@ from .models import Teacher, TeacherAvailability, TeacherQualification
 
 @admin.register(Teacher)
 class TeacherAdmin(admin.ModelAdmin):
-    list_display = ("name", "tenant", "code", "email", "status", "max_weekly_load")
+    list_display = ("name", "tenant", "code", "email", "status", "weekly_load")
     list_filter = ("status",)
     search_fields = ("name", "code", "email", "phone_number", "notes")
 

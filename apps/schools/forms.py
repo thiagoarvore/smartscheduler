@@ -1,5 +1,6 @@
 from django import forms
 
+from apps.tenants.forms import BaseModelForm
 from .models import ClassGroup, Period, Series, TeachingLevel, Unit
 
 BRAZIL_TIMEZONES = [
@@ -18,7 +19,7 @@ BRAZIL_TIMEZONES = [
 ]
 
 
-class UnitForm(forms.ModelForm):
+class UnitForm(BaseModelForm):
     timezone = forms.ChoiceField(
         label="Fuso horário",
         choices=BRAZIL_TIMEZONES,
@@ -34,13 +35,13 @@ class UnitForm(forms.ModelForm):
         }
 
 
-class TeachingLevelForm(forms.ModelForm):
+class TeachingLevelForm(BaseModelForm):
     class Meta:
         model = TeachingLevel
         fields = ["code", "name", "order", "status"]
 
 
-class PeriodForm(forms.ModelForm):
+class PeriodForm(BaseModelForm):
     class Meta:
         model = Period
         fields = ["name", "type", "order", "status", "start_time", "end_time", "is_tenant_default", "units"]
@@ -49,7 +50,6 @@ class PeriodForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
         if self.request:
             self.fields["units"].queryset = Unit.objects.filter(tenant=self.request.tenant)
@@ -57,7 +57,7 @@ class PeriodForm(forms.ModelForm):
         self.fields["units"].required = False
 
 
-class SeriesForm(forms.ModelForm):
+class SeriesForm(BaseModelForm):
     class Meta:
         model = Series
         fields = ["teaching_level", "code", "name", "order", "status", "is_tenant_default", "units"]
@@ -66,7 +66,6 @@ class SeriesForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
         if self.request:
             tenant = self.request.tenant
@@ -75,13 +74,12 @@ class SeriesForm(forms.ModelForm):
         self.fields["units"].required = False
 
 
-class ClassGroupForm(forms.ModelForm):
+class ClassGroupForm(BaseModelForm):
     class Meta:
         model = ClassGroup
         fields = ["unit", "period", "series", "code", "name", "status"]
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
         if self.request:
             tenant = self.request.tenant

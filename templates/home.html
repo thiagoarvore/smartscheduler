@@ -5,7 +5,7 @@
 {% block page_content %}
 <div class="page-header mb-6">
     <h1 class="page-title">Dashboard</h1>
-    <p class="page-subtitle text-muted">Bem-vindo, {{ user.first_name|default:user.email }}. Selecione uma área no menu ao lado.</p>
+    <p class="page-subtitle text-muted">Bem-vindo, {{ user.first_name|default:user.email|default:"" }}. Selecione uma área no menu ao lado.</p>
 </div>
 
 <div class="dashboard-grid">

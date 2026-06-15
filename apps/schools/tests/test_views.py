@@ -36,7 +36,6 @@ class TestSchoolsViews:
             tenant=tenant,
             name="Unidade Centro",
             status=Unit.StatusChoices.ACTIVE,
-            default_settings={},
         )
 
         response = client.get(reverse("schools:unit-list"))
@@ -55,7 +54,6 @@ class TestSchoolsViews:
                 "name": "Unidade Sul",
                 "status": Unit.StatusChoices.ACTIVE,
                 "timezone": "America/Sao_Paulo",
-                "default_settings": "{}",
             },
         )
 

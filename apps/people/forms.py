@@ -1,15 +1,18 @@
 from django import forms
 
+from apps.schools.models import TeachingLevel, Unit
+from apps.curriculum.models import Subject
+from apps.tenants.forms import BaseModelForm
 from .models import Teacher, TeacherAvailability, TeacherQualification
 
 
-class TeacherForm(forms.ModelForm):
+class TeacherForm(BaseModelForm):
     class Meta:
         model = Teacher
         fields = ["code", "name", "email", "phone_number", "status", "weekly_load", "notes"]
 
 
-class TeacherQualificationForm(forms.ModelForm):
+class TeacherQualificationForm(BaseModelForm):
     class Meta:
         model = TeacherQualification
         fields = [
@@ -24,11 +27,9 @@ class TeacherQualificationForm(forms.ModelForm):
         ]
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
         if self.request:
-            from apps.schools.models import TeachingLevel, Unit
-            from apps.curriculum.models import Subject
+            from apps.schools.models import Series
 
             tenant = self.request.tenant
             self.fields["teacher"].queryset = Teacher.objects.filter(tenant=tenant)
@@ -39,20 +40,17 @@ class TeacherQualificationForm(forms.ModelForm):
 
             # Filter series based on selected teaching_level if editing
             if self.instance and self.instance.pk and self.instance.teaching_level_id:
-                from apps.schools.models import Series
-
                 self.fields["series"].queryset = Series.objects.filter(
                     tenant=tenant, teaching_level_id=self.instance.teaching_level_id
                 )
 
 
-class TeacherAvailabilityForm(forms.ModelForm):
+class TeacherAvailabilityForm(BaseModelForm):
     class Meta:
         model = TeacherAvailability
         fields = ["teacher", "weekday", "start_time", "end_time", "is_available", "reason"]
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
         if self.request:
             self.fields["teacher"].queryset = Teacher.objects.filter(tenant=self.request.tenant)

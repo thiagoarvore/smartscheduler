@@ -17,16 +17,22 @@
             Grade <span style="color: var(--color-primary);">Certa</span>
         </a>
         <div class="navbar__actions">
-            <span class="text-muted">{{ user.first_name|default:user.email }}</span>
+            {% if user.is_authenticated %}
+            <span class="text-muted">{{ user.first_name|default:user.email|default:"" }}</span>
             <a href="{% url 'logout' %}" class="btn btn--ghost btn--sm">Sair</a>
+            {% else %}
+            <a href="{% url 'login' %}" class="btn btn--primary btn--sm">Entrar</a>
+            {% endif %}
         </div>
     </nav>
     {% endblock %}
 
     <div class="app-layout">
+        {% if user.is_authenticated %}
         {% block sidebar %}
         {% include "partials/_sidebar.html" %}
         {% endblock %}
+        {% endif %}
 
         <main class="main-content">
             {% block page_content %}{% endblock %}

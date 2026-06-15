@@ -35,6 +35,9 @@ MIDDLEWARE = [  # noqa: F405
     }
 ]
 
+# Add test middleware that injects request.tenant (simulates django-tenants in SQLite)
+MIDDLEWARE.insert(0, "conftest.SetTenantMiddleware")
+
 # Avoid WhiteNoise manifest lookups in SQLite tests
 STORAGES["staticfiles"] = {  # noqa: F405
     "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"

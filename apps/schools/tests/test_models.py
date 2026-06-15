@@ -15,7 +15,6 @@ class TestSchoolStructureModels:
             code="UN-01",
             name="Unidade Centro",
             status=Unit.StatusChoices.ACTIVE,
-            default_settings={},
         )
         teaching_level = TeachingLevel.objects.create(
             tenant=tenant,
@@ -26,12 +25,12 @@ class TestSchoolStructureModels:
         )
         period = Period.objects.create(
             tenant=tenant,
-            unit=unit,
             name="Manhã",
             type=Period.TypeChoices.MORNING,
             order=1,
             status=Period.StatusChoices.ACTIVE,
         )
+        period.units.add(unit)
         series = Series.objects.create(
             tenant=tenant,
             teaching_level=teaching_level,
@@ -51,9 +50,8 @@ class TestSchoolStructureModels:
         )
 
         assert unit.tenant == tenant
-        assert unit.default_settings == {}
         assert str(unit) == "Unidade Centro"
-        assert period.unit == unit
+        assert unit in period.units.all()
         assert period.tenant == tenant
         assert str(period) == "Manhã"
         assert series.teaching_level == teaching_level
@@ -63,27 +61,27 @@ class TestSchoolStructureModels:
         assert class_group.series == series
         assert str(class_group) == "6º ano A"
 
-    def test_period_rejects_unit_from_another_tenant(self):
-        tenant_a = Tenant.objects.create(name="Tenant A", schema_name="tenant_a")
-        tenant_b = Tenant.objects.create(name="Tenant B", schema_name="tenant_b")
-        unit = Unit.objects.create(
-            tenant=tenant_a,
-            name="Unidade A",
-            status=Unit.StatusChoices.ACTIVE,
-            default_settings={},
+    def test_period_units_m2m_links_to_units(self):
+        """Period → units is M2M; a period can belong to multiple units."""
+        tenant = Tenant.objects.create(name="Escola Teste", schema_name="escola_teste2")
+        unit_a = Unit.objects.create(
+            tenant=tenant, name="Unidade A", status=Unit.StatusChoices.ACTIVE
         )
-
-        period = Period(
-            tenant=tenant_b,
-            unit=unit,
-            name="Tarde",
-            type=Period.TypeChoices.AFTERNOON,
+        unit_b = Unit.objects.create(
+            tenant=tenant, name="Unidade B", status=Unit.StatusChoices.ACTIVE
+        )
+        period = Period.objects.create(
+            tenant=tenant,
+            name="Manhã",
+            type=Period.TypeChoices.MORNING,
             order=1,
             status=Period.StatusChoices.ACTIVE,
         )
+        period.units.add(unit_a, unit_b)
 
-        with pytest.raises(ValidationError):
-            period.full_clean()
+        assert unit_a in period.units.all()
+        assert unit_b in period.units.all()
+        assert period.units.count() == 2
 
     def test_class_group_rejects_related_records_from_other_tenants(self):
         tenant_a = Tenant.objects.create(name="Tenant A", schema_name="tenant_a")
@@ -93,16 +91,15 @@ class TestSchoolStructureModels:
             tenant=tenant_a,
             name="Unidade A",
             status=Unit.StatusChoices.ACTIVE,
-            default_settings={},
         )
-        Period.objects.create(
+        period = Period.objects.create(
             tenant=tenant_a,
-            unit=unit,
             name="Manhã",
             type=Period.TypeChoices.MORNING,
             order=1,
             status=Period.StatusChoices.ACTIVE,
         )
+        period.units.add(unit)
         teaching_level = TeachingLevel.objects.create(
             tenant=tenant_b,
             name="Ensino Médio",

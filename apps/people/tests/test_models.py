@@ -21,7 +21,7 @@ class TestTeacherModel:
             email="maria.souza@gradecerta.com",
             phone_number="(11) 99999-0000",
             status=Teacher.StatusChoices.ACTIVE,
-            max_weekly_load=20,
+            weekly_load=20,
             notes="Disponível apenas no período da manhã.",
         )
 
@@ -30,7 +30,7 @@ class TestTeacherModel:
         assert teacher.tenant == tenant
         assert teacher.name == "Maria Souza"
         assert str(teacher) == "Maria Souza"
-        assert teacher.max_weekly_load == 20
+        assert teacher.weekly_load == 20
         assert teacher.active is True
 
     def test_teacher_is_unavailable_when_no_availability_is_registered(self):
@@ -87,7 +87,6 @@ class TestTeacherQualificationAndAvailabilityModels:
             tenant=tenant_b,
             name="Unidade B",
             status=Unit.StatusChoices.ACTIVE,
-            default_settings={},
         )
 
         qualification = TeacherQualification(
@@ -131,7 +130,6 @@ class TestTeacherQualificationAndAvailabilityModels:
             tenant=tenant,
             name="Unidade Centro",
             status=Unit.StatusChoices.ACTIVE,
-            default_settings={},
         )
         teaching_level = TeachingLevel.objects.create(
             tenant=tenant,

@@ -64,7 +64,7 @@ class Timetable(BaseModel):
             errors["period"] = _("O período deve pertencer ao mesmo tenant.")
         if self.tenant_id and self.school_year_id and self.school_year.tenant_id != self.tenant_id:
             errors["school_year"] = _("O ano letivo deve pertencer ao mesmo tenant.")
-        if self.unit_id and self.period_id and self.period.unit_id != self.unit_id:
+        if self.unit_id and self.period_id and not self.period.units.filter(pk=self.unit_id).exists():
             errors["period"] = _("O período deve pertencer à mesma unidade da grade.")
         if errors:
             raise ValidationError(errors)

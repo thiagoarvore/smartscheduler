@@ -34,16 +34,15 @@ class TestTimetableModels:
             tenant=tenant_a,
             name="Unidade A",
             status=Unit.StatusChoices.ACTIVE,
-            default_settings={},
         )
         period = Period.objects.create(
             tenant=tenant_a,
-            unit=unit,
             name="Manhã",
             type=Period.TypeChoices.MORNING,
             order=1,
             status=Period.StatusChoices.ACTIVE,
         )
+        period.units.add(unit)
         school_year = SchoolYear.objects.create(
             tenant=tenant_a,
             name="2026",
@@ -73,16 +72,15 @@ class TestTimetableModels:
             tenant=tenant,
             name="Unidade Centro",
             status=Unit.StatusChoices.ACTIVE,
-            default_settings={},
         )
         period = Period.objects.create(
             tenant=tenant,
-            unit=unit,
             name="Manhã",
             type=Period.TypeChoices.MORNING,
             order=1,
             status=Period.StatusChoices.ACTIVE,
         )
+        period.units.add(unit)
         school_year = SchoolYear.objects.create(
             tenant=tenant,
             name="2026",
@@ -161,16 +159,15 @@ def _build_basic_timetable_version(double_lesson=False, consecutive=True, includ
         tenant=tenant,
         name="Unidade Centro",
         status=Unit.StatusChoices.ACTIVE,
-        default_settings={},
     )
     period = Period.objects.create(
         tenant=tenant,
-        unit=unit,
         name="Manhã",
         type=Period.TypeChoices.MORNING,
         order=1,
         status=Period.StatusChoices.ACTIVE,
     )
+    period.units.add(unit)
     school_year = SchoolYear.objects.create(
         tenant=tenant,
         name="2026",

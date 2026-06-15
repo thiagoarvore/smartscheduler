@@ -75,7 +75,6 @@ class TestCurriculumMatrixAndWorkloadModels:
             tenant=tenant,
             name="Unidade Centro",
             status=Unit.StatusChoices.ACTIVE,
-            default_settings={},
         )
         teaching_level = TeachingLevel.objects.create(
             tenant=tenant,
@@ -92,12 +91,12 @@ class TestCurriculumMatrixAndWorkloadModels:
         )
         period = Period.objects.create(
             tenant=tenant,
-            unit=unit,
             name="Manhã",
             type=Period.TypeChoices.MORNING,
             order=1,
             status=Period.StatusChoices.ACTIVE,
         )
+        period.units.add(unit)
         class_group = ClassGroup.objects.create(
             tenant=tenant,
             unit=unit,
@@ -144,7 +143,6 @@ class TestCurriculumMatrixAndWorkloadModels:
             tenant=tenant,
             name="Unidade Centro",
             status=Unit.StatusChoices.ACTIVE,
-            default_settings={},
         )
         teaching_level = TeachingLevel.objects.create(
             tenant=tenant,
@@ -168,12 +166,12 @@ class TestCurriculumMatrixAndWorkloadModels:
         )
         period = Period.objects.create(
             tenant=tenant,
-            unit=unit,
             name="Manhã",
             type=Period.TypeChoices.MORNING,
             order=1,
             status=Period.StatusChoices.ACTIVE,
         )
+        period.units.add(unit)
         class_group = ClassGroup.objects.create(
             tenant=tenant,
             unit=unit,
