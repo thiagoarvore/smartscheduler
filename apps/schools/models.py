@@ -269,6 +269,11 @@ class SchoolYear(BaseModel):
             "Cooldown: 1 execução por hora (desativado em local/dev/test). Ver SDD §22.2.4."
         ),
     )
+    suggestions_enabled = models.BooleanField(
+        _("sugestões ativadas"),
+        default=True,
+        help_text=_("Se Falso, a camada de sugestões não roda para este ano letivo."),
+    )
 
     class Meta:
         verbose_name = _("ano letivo")

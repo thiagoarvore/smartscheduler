@@ -1,0 +1,36 @@
+<div class="suggestion-detail">
+    <h3>{{ suggestion.titulo }}</h3>
+
+    <dl class="suggestion-fields">
+        <dt>Categoria</dt>
+        <dd>{{ suggestion.get_categoria_display }}</dd>
+
+        <dt>Descrição</dt>
+        <dd>{{ suggestion.descricao|default:"—" }}</dd>
+
+        <dt>Delta (redução de buracos)</dt>
+        <dd>
+            {% if suggestion.delta >= 3 %}
+            <span class="badge badge-green">🟢 {{ suggestion.delta }}</span>
+            {% elif suggestion.delta >= 1 %}
+            <span class="badge badge-yellow">🟡 {{ suggestion.delta }}</span>
+            {% else %}
+            <span class="badge">{{ suggestion.delta }}</span>
+            {% endif %}
+        </dd>
+
+        <dt>Buracos antes</dt>
+        <dd>{{ suggestion.buracos_antes }}</dd>
+
+        <dt>Buracos depois</dt>
+        <dd>{{ suggestion.buracos_depois }}</dd>
+
+        <dt>Parâmetros alterados</dt>
+        <dd><pre class="param-diff">{{ suggestion.param_diff_json }}</pre></dd>
+
+        <dt>Criada em</dt>
+        <dd>{{ suggestion.created_at|date:"d/m/Y H:i" }}</dd>
+    </dl>
+
+    <button class="btn btn--ghost" _="on click hide #suggestion-modal">Fechar</button>
+</div>

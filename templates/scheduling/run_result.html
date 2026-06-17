@@ -52,6 +52,56 @@
             </tbody>
         </table>
     </section>
+
+    {# Sprint 09 — Painel de Sugestões #}
+    {% if suggestions_count > 0 %}
+    <details open class="suggestions-panel">
+        <summary><h3 style="display:inline;">💡 Sugestões de melhoria ({{ suggestions_count }})</h3></summary>
+        <ul class="suggestions-list">
+            {% for suggestion in suggestions %}
+            <li id="suggestion-{{ suggestion.pk }}" class="suggestion-item">
+                <div class="suggestion-header">
+                    <strong>{{ suggestion.titulo }}</strong>
+                    {% if suggestion.delta >= 3 %}
+                    <span class="badge badge-green">🟢 Δ = {{ suggestion.delta }}</span>
+                    {% elif suggestion.delta >= 1 %}
+                    <span class="badge badge-yellow">🟡 Δ = {{ suggestion.delta }}</span>
+                    {% else %}
+                    <span class="badge">Δ = {{ suggestion.delta }}</span>
+                    {% endif %}
+                </div>
+                {% if suggestion.descricao %}
+                <p class="suggestion-desc">{{ suggestion.descricao }}</p>
+                {% endif %}
+                <div class="suggestion-actions">
+                    <button class="btn btn--sm btn--primary" disabled
+                            title="Previsto pra sprint futura">Aplicar</button>
+                    <button class="btn btn--sm btn--secondary"
+                            hx-get="{% url 'scheduling:suggestion-detail' suggestion.pk %}"
+                            hx-target="#suggestion-modal-body"
+                            hx-swap="innerHTML"
+                            _="on htmx:afterRequest show #suggestion-modal">Detalhes</button>
+                    <button class="btn btn--sm btn--ghost"
+                            hx-post="{% url 'scheduling:suggestion-ignore' suggestion.pk %}"
+                            hx-target="#suggestion-{{ suggestion.pk }}"
+                            hx-swap="outerHTML"
+                            hx-confirm="Tem certeza que deseja ignorar esta sugestão?">Ignorar</button>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </details>
+
+    {# Modal para detalhes da sugestão #}
+    <div id="suggestion-modal" style="display:none;">
+        <div class="modal-backdrop" _="on click hide #suggestion-modal"></div>
+        <div class="modal-content">
+            <div id="suggestion-modal-body"></div>
+            <button class="btn btn--ghost" _="on click hide #suggestion-modal">Fechar</button>
+        </div>
+    </div>
+    {% endif %}
+
     {% else %}
     <p>Nenhuma execução bem-sucedida ainda para este ano letivo.</p>
     <p><a href="{% url 'scheduling:run-timetable' school_year.id %}" class="btn btn-primary">🚀 Rodar Grade Certa</a></p>

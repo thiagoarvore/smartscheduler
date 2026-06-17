@@ -1,7 +1,9 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseNotAllowed
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse, reverse_lazy
+from django.utils import timezone
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -202,4 +204,49 @@ class RunResultViewActual(TenantMixin, LoginRequiredMixin, DetailView):
         context["school_year"] = school_year
         context["runs"] = runs_list
         context["winning_run"] = winning_run
+
+        # Sprint 09 — Sugestões (SDD §22.4)
+        if winning_run:
+            from .models import Suggestion
+
+            suggestions = Suggestion.objects.filter(
+                solver_run=winning_run,
+                status=Suggestion.StatusChoices.PENDING,
+            ).order_by("-delta")
+            context["suggestions"] = suggestions
+            context["suggestions_count"] = suggestions.count()
+        else:
+            context["suggestions"] = []
+            context["suggestions_count"] = 0
+
         return context
+
+
+# Sprint 09 — Sugestões (SDD §22.4)
+# -----------------------------------------------------------------------
+
+
+def suggestion_detail_view(request, pk):
+    """GET /scheduling/suggestion/<uuid:pk>/ — partial HTML for HTMX modal."""
+    from .models import Suggestion
+
+    suggestion = get_object_or_404(Suggestion, pk=pk)
+    return render(request, "scheduling/suggestion_detail.html", {"suggestion": suggestion})
+
+
+def suggestion_ignore_view(request, pk):
+    """POST /scheduling/suggestion/<uuid:pk>/ignore/ — mark suggestion as ignored.
+
+    Sets status='ignored' and aplicado_em=now(), then returns an HTMX swap
+    that removes the element from the list.
+    """
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    from .models import Suggestion
+
+    suggestion = get_object_or_404(Suggestion, pk=pk)
+    suggestion.status = Suggestion.StatusChoices.IGNORED
+    suggestion.aplicado_em = timezone.now()
+    suggestion.save(update_fields=["status", "aplicado_em", "updated_at"])
+    # HTMX outer-swap: returns an empty div with the same id so the row disappears
+    return HttpResponse(f'<div id="suggestion-{pk}"></div>')

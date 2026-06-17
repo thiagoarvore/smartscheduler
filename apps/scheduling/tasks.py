@@ -1,13 +1,15 @@
-"""Tasks do solver (Sprint 08 item 3.9).
+"""Tasks do solver (Sprint 08 item 3.9) e camada de sugestões (Sprint 09 §3.4).
 
 Funções puras, chamáveis diretamente ou via Celery (quando disponível).
 Pipeline: run_3_variants → run_variant (A, B, C sequenciais).
-Fila futura: `scheduler-long`.
+Pipeline sugestões: run_suggestions_layer (após solver_run com buracos > 0).
+Fila futura: `scheduler-long`, `scheduler-medium`.
 """
 from __future__ import annotations
 
 import logging
 import time
+import traceback
 from copy import copy
 from datetime import timedelta
 from typing import Any
@@ -149,3 +151,104 @@ def _map_criterio(sol_criterio) -> str:
         "interrupted": SolverRun.CriterioParadaChoices.INTERRUPTED,
     }
     return mapping.get(sol_criterio.value, SolverRun.CriterioParadaChoices.ERRO)
+
+
+# ---------------------------------------------------------------------------
+# Camada de sugestões (Sprint 09 §3.4)
+# ---------------------------------------------------------------------------
+
+# Timeout para a camada de sugestões (§22.4.3: 10 min)
+SUGGESTIONS_TIMEOUT_SECONDS = 600
+
+
+def run_suggestions_layer(solver_run_id: str) -> dict[str, Any]:
+    """Executa a camada de sugestões para um SolverRun.
+
+    Steps:
+    1. Carrega o SolverRun (com select_related school_year)
+    2. Se buracos == 0 ou suggestions_enabled == False: marca disabled, retorna
+    3. Marca suggestions_status='running'
+    4. Roda SuggestionsService(solver_run).run_all_categories() com timeout de 10 min
+    5. Sucesso: suggestions_status='done', suggestions_count=len(result)
+    6. Timeout: suggestions_status='timeout'
+    7. Exceção: suggestions_status='failed', log, NÃO propaga
+
+    Função pura — pode ser chamada diretamente ou via Celery (quando disponível).
+    """
+    from apps.scheduling.services.suggestions import SuggestionsService
+
+    try:
+        solver_run = SolverRun.objects.select_related("school_year").get(
+            id=solver_run_id
+        )
+    except SolverRun.DoesNotExist:
+        logger.error("run_suggestions_layer: SolverRun %s não encontrado", solver_run_id)
+        return {"status": "error", "error": "SolverRun não encontrado"}
+
+    school_year = solver_run.school_year
+
+    # Pré-condições (§22.4.3)
+    if solver_run.buracos is None or solver_run.buracos == 0 or not school_year.suggestions_enabled:
+        solver_run.suggestions_status = SolverRun.SuggestionsStatusChoices.DISABLED
+        solver_run.save(update_fields=["suggestions_status"])
+        logger.info(
+            "run_suggestions_layer: SolverRun %s desativado (buracos=%s, suggestions_enabled=%s)",
+            solver_run_id,
+            solver_run.buracos,
+            school_year.suggestions_enabled,
+        )
+        return {"status": "disabled", "suggestions_count": 0}
+
+    # Marca como running
+    solver_run.suggestions_status = SolverRun.SuggestionsStatusChoices.RUNNING
+    solver_run.save(update_fields=["suggestions_status"])
+
+    try:
+        # Timeout guard: 10 minutos (§22.4.3)
+        service = SuggestionsService(solver_run)
+        start = time.monotonic()
+        suggestions = service.run_all_categories()
+        elapsed = time.monotonic() - start
+
+        if elapsed > SUGGESTIONS_TIMEOUT_SECONDS:
+            solver_run.suggestions_status = SolverRun.SuggestionsStatusChoices.TIMEOUT
+            solver_run.suggestions_count = len(suggestions)
+            solver_run.save(update_fields=["suggestions_status", "suggestions_count"])
+            logger.warning(
+                "run_suggestions_layer: SolverRun %s timeout após %.1fs (%d sugestões)",
+                solver_run_id,
+                elapsed,
+                len(suggestions),
+            )
+            return {
+                "status": "timeout",
+                "suggestions_count": len(suggestions),
+                "elapsed_seconds": elapsed,
+            }
+
+        solver_run.suggestions_status = SolverRun.SuggestionsStatusChoices.DONE
+        solver_run.suggestions_count = len(suggestions)
+        solver_run.save(update_fields=["suggestions_status", "suggestions_count"])
+        logger.info(
+            "run_suggestions_layer: SolverRun %s concluída com %d sugestões (%.1fs)",
+            solver_run_id,
+            len(suggestions),
+            elapsed,
+        )
+        return {
+            "status": "done",
+            "suggestions_count": len(suggestions),
+            "elapsed_seconds": elapsed,
+        }
+
+    except Exception:
+        solver_run.suggestions_status = SolverRun.SuggestionsStatusChoices.FAILED
+        solver_run.save(update_fields=["suggestions_status"])
+        logger.exception(
+            "run_suggestions_layer: SolverRun %s falhou", solver_run_id
+        )
+        # NÃO propaga a exceção (§22.4.5)
+        return {
+            "status": "failed",
+            "error": traceback.format_exc(),
+        }

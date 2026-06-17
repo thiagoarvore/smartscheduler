@@ -889,6 +889,67 @@ class SolverRun(BaseModel):
         }
 
 
+class Suggestion(BaseModel):
+    """Sugestão de melhoria gerada pela camada de sugestões (SDD §22.4, Sprint 09)."""
+
+    class CategoriaChoices(models.TextChoices):
+        WORKLOAD_INCREASE = "workload_increase", _("Aumentar carga horária")
+        TEACHER_ADD = "teacher_add", _("Adicionar professor")
+        TEACHER_AVAILABILITY = "teacher_availability", _("Expandir disponibilidade")
+        SUBJECT_RULE_RELAX = "subject_rule_relax", _("Relaxar regra")
+
+    class StatusChoices(models.TextChoices):
+        PENDING = "pending", _("Pendente")
+        APPLIED = "applied", _("Aplicada")
+        IGNORED = "ignored", _("Ignorada")
+
+    tenant = models.ForeignKey(
+        "tenants.Tenant",
+        on_delete=models.CASCADE,
+        related_name="suggestions",
+        verbose_name=_("tenant"),
+    )
+    school_year = models.ForeignKey(
+        SchoolYear,
+        on_delete=models.CASCADE,
+        related_name="suggestions",
+        verbose_name=_("ano letivo"),
+    )
+    solver_run = models.ForeignKey(
+        SolverRun,
+        on_delete=models.CASCADE,
+        related_name="suggestions",
+        verbose_name=_("execução do solver"),
+    )
+    categoria = models.CharField(_("categoria"), max_length=30, choices=CategoriaChoices.choices)
+    titulo = models.CharField(_("título"), max_length=200)
+    descricao = models.TextField(_("descrição"), blank=True, default="")
+    buracos_antes = models.PositiveIntegerField(_("buracos antes"), default=0)
+    buracos_depois = models.PositiveIntegerField(_("buracos depois"), default=0)
+    delta = models.IntegerField(_("delta"), default=0, help_text=_("Redução no nº de buracos (buracos_antes - buracos_depois)."))
+    param_diff = models.JSONField(_("parâmetros alterados"), default=dict, blank=True)
+    status = models.CharField(_("status"), max_length=10, choices=StatusChoices.choices, default=StatusChoices.PENDING)
+    aplicado_em = models.DateTimeField(_("aplicada em"), null=True, blank=True)
+
+    class Meta:
+        verbose_name = _("sugestão")
+        verbose_name_plural = _("sugestões")
+        ordering = ["-delta"]
+        indexes = [
+            models.Index(fields=["school_year", "-created_at"], name="suggestion_school_year_created"),
+            models.Index(fields=["solver_run"], name="suggestion_solver_run"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.get_categoria_display()}: {self.titulo}"
+
+    @property
+    def param_diff_json(self) -> str:
+        import json
+
+        return json.dumps(self.param_diff, indent=2, ensure_ascii=False)
+
+
 # Auditlog registration (Sprint 08)
 # -----------------------------------------------------------------------
 
@@ -896,3 +957,4 @@ from auditlog.registry import auditlog  # noqa: E402
 
 auditlog.register(SolverVariant)
 auditlog.register(SolverRun)
+auditlog.register(Suggestion)

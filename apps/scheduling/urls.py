@@ -9,6 +9,8 @@ from .views import (
     SchoolYearDeleteView,
     SchoolYearListView,
     SchoolYearUpdateView,
+    suggestion_detail_view,
+    suggestion_ignore_view,
 )
 
 app_name = "scheduling"
@@ -42,5 +44,16 @@ urlpatterns = [
         "run/<uuid:school_year_id>/result/",
         RunResultViewActual.as_view(),
         name="run-result",
+    ),
+    # Sprint 09 — Sugestões
+    path(
+        "suggestion/<uuid:pk>/",
+        suggestion_detail_view,
+        name="suggestion-detail",
+    ),
+    path(
+        "suggestion/<uuid:pk>/ignore/",
+        suggestion_ignore_view,
+        name="suggestion-ignore",
     ),
 ]
