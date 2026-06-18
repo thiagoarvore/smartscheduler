@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}{{ school.name }} — Grade Certa{% endblock %}
+
+{% block content %}
+<h1>{{ school.name }}</h1>
+
+<dl>
+  <dt>CNPJ</dt>
+  <dd>{{ school.cnpj|default:"—" }}</dd>
+
+  <dt>Telefone</dt>
+  <dd>{{ school.phone|default:"—" }}</dd>
+
+  <dt>E-mail</dt>
+  <dd>{{ school.email|default:"—" }}</dd>
+
+  <dt>Endereço</dt>
+  <dd>{{ school.address|default:"—" }}</dd>
+</dl>
+
+{% if request.school.pk == school.pk %}
+<a href="{% url 'schools:update' pk=school.pk %}">Editar</a>
+{% endif %}
+{% endblock %}

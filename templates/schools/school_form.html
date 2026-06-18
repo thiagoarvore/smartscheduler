@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Editar escola — Grade Certa{% endblock %}
+
+{% block content %}
+<h1>Editar {{ school.name }}</h1>
+
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Salvar</button>
+</form>
+
+<a href="{% url 'schools:detail' pk=school.pk %}">Cancelar</a>
+{% endblock %}

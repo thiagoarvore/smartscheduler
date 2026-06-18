@@ -56,9 +56,9 @@ INSTALLED_APPS = [
     "django_base_kit",
     "django_htmx",
 
-    # Local (sprints futuras)
-    # "accounts",
-    # "schools",
+    # Local
+    "accounts",
+    "schools",
 ]
 
 MIDDLEWARE = [
@@ -68,6 +68,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "schools.middleware.SchoolMiddleware",
     "auditlog.middleware.AuditlogMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -98,7 +99,7 @@ TEMPLATES = [
 # ---------------------------------------------------------------------------
 # Database — SQLite for local/test, PostgreSQL for Docker/dev/prod
 # ---------------------------------------------------------------------------
-if ENVIRONMENT == "local" or IS_TEST_ENV:
+if ENVIRONMENT in ("local", "test") or IS_TEST_ENV:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -120,7 +121,7 @@ else:
 # ---------------------------------------------------------------------------
 # Cache — LocMem for local/test, Redis for Docker/dev/prod
 # ---------------------------------------------------------------------------
-if ENVIRONMENT == "local" or IS_TEST_ENV:
+if ENVIRONMENT in ("local", "test") or IS_TEST_ENV:
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",

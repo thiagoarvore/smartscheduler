@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}Grade Certa{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <header>
+    <a href="{% url 'schools:redirect' %}">Grade Certa</a>
+    {% if request.school %}
+      <span>{{ request.school.name }}</span>
+    {% endif %}
+    {% if user.is_authenticated %}
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit">Sair</button>
+      </form>
+    {% endif %}
+  </header>
+  <main>
+    {% include "partials/_messages.html" %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
