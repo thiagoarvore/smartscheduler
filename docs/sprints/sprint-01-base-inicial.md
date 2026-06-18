@@ -33,21 +33,17 @@ smartscheduler/
 ├─ manage.py
 ├─ poetry.lock           # gerado pelo Poetry
 ├─ pyproject.toml        # deps + config Poetry
-├─ config/               # Django settings (era "app" no Thinkflow, mas aqui será "config")
+├─ app/
 │  ├─ __init__.py
 │  ├─ asgi.py
 │  ├─ settings.py
 │  ├─ urls.py
 │  └─ wsgi.py
-├─ apps/                 # apps de domínio (accounts, schools, etc)
-│  └─ __init__.py
 ├─ static/
 ├─ templates/
 ├─ staticfiles/          # coletado pelo collectstatic
 └─ media/                # uploads
 ```
-
-> **Mudança em relação ao Thinkflow**: o projeto Django do Thinkflow chama o app raiz de `app/` (celery e settings vivem lá). Vamos usar `config/` (padrão Django moderno, mais explícito) e separar `apps/` pros apps de domínio.
 
 ## 3. Arquivos
 
@@ -97,7 +93,7 @@ target-version = "py313"
 select = ["E", "F", "I", "W", "UP", "B", "DJ"]
 
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "config.settings"
+DJANGO_SETTINGS_MODULE = "app.settings"
 python_files = ["test_*.py", "*_test.py"]
 ```
 
@@ -147,11 +143,11 @@ EXPOSE 8000
 
 ### 3.3 `docker-compose.yml`
 
-Baseado no Thinkflow, com `app` renomeado pra `web` (mais semântico) e sem Celery/Beat ainda (entram em sprint futura):
+Baseado no Thinkflow, sem Celery/Beat ainda (entram em sprint futura):
 
 ```yaml
 services:
-  web:
+  app:
     image: smartscheduler_web:local
     build: .
     restart: always
@@ -240,7 +236,7 @@ CELERY_BROKER_URL=redis://redis:6379/0
 CELERY_RESULT_BACKEND=redis://redis:6379/0
 ```
 
-### 3.5 `config/settings.py` (esqueleto mínimo)
+### 3.5 `app/settings.py` (esqueleto mínimo)
 
 ```python
 from pathlib import Path
@@ -282,8 +278,8 @@ MIDDLEWARE = [
     "django_htmx.middleware.HtmxMiddleware",
 ]
 
-ROOT_URLCONF = "config.urls"
-WSGI_APPLICATION = "config.wsgi.application"
+ROOT_URLCONF = "app.urls"
+WSGI_APPLICATION = "app.wsgi.application"
 
 DATABASES = {
     "default": {
@@ -384,7 +380,7 @@ docker compose exec web python manage.py createsuperuser
 
 ## 5. Endpoint de healthcheck
 
-Adicionar em `config/urls.py`:
+Adicionar em `app/urls.py`:
 
 ```python
 from django.http import JsonResponse
@@ -414,7 +410,7 @@ urlpatterns = [
 ## 7. Fora de escopo desta sprint
 
 - Celery worker/beat (entram na Sprint 02 ou posterior)
-- Apps de domínio (`apps.accounts`, `apps.schools`...) — sprints futuras
+- Apps de domínio (`accounts`, `schools`...) — sprints futuras
 - Modelagem de School, User, Unit — sprints futuras
 - Testes de integração (entram quando houver models)
 - CI/CD
