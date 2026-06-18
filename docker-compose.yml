@@ -1,0 +1,65 @@
+services:
+  app:
+    image: smartscheduler_app:local
+    build: .
+    restart: always
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             python manage.py runserver 0.0.0.0:8000"
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - .:/smartscheduler
+      - static_volume:/smartscheduler/staticfiles
+      - media_data:/smartscheduler/media
+
+  db:
+    image: postgres:18.1-trixie
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data_smartscheduler:/var/lib/postgresql
+    environment:
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+      - POSTGRES_DB=${DB_NAME:-smartscheduler}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_smartscheduler
+    command: redis-server --port 6379 --appendonly yes
+    volumes:
+      - redis:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data_smartscheduler:
+    name: postgres_data_smartscheduler
+  static_volume:
+  redis:
+  media_data:

@@ -1,0 +1,41 @@
+[project]
+name = "smartscheduler"
+version = "0.1.0"
+description = "Grade Certa — sistema de grade horária escolar"
+requires-python = ">=3.13"
+dependencies = [
+    "Django>=6.0,<7.0",
+    "psycopg[binary]>=3.2",
+    "celery[redis]>=5.5",
+    "redis>=5.0",
+    "django-base-kit>=0.1.4",
+    "django-htmx>=1.23",
+    "django-auditlog>=3.4",
+    "python-decouple>=3.8",
+    "whitenoise>=6.12",
+    "gunicorn>=23.0",
+]
+
+[tool.poetry]
+package-mode = false
+
+[tool.poetry.group.dev.dependencies]
+ruff = ">=0.8"
+pytest = ">=8.0"
+pytest-django = ">=4.8"
+ipython = ">=8.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B", "DJ"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "app.settings"
+python_files = ["test_*.py", "*_test.py"]
