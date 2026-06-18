@@ -1,16 +1,20 @@
-# Sprint 02 — App `accounts` + App `schools`
+# Sprint 02 — App `accounts` + App `schools` + Middleware híbrido
 
 > **Branch**: `sprint-02/accounts-e-schools`
-> **Objetivo**: ter os apps de domínio base. `accounts` centraliza a redefinição/reset de senha (customizando o que o `django_base_kit` entrega). `schools` cria a escola de cada user (relação 1:1 — `School.owner = ForeignKey(User, unique=True)`).
+> **Objetivo**: ter os apps de domínio base. `accounts` é app marcador (auth vem do `django_base_kit`). `schools` cria a escola de **cada user criado por mim (admin)** — relação 1:1. **Toda view autenticada ganha `request.school` via middleware**, e listagens escopam via mixin.
 
 ## 1. Princípios desta sprint
 
 - **Sem over-engineering**. Só o que precisa existir pra próxima sprint (Sprint 03 — unidades, séries, turmas) ter onde morar.
-- `accounts` aproveita o `django_base_kit` (que já entrega signup/login/logout/reset). Sprint adiciona **só**: integração com o modelo `School` e ajustes pontuais.
-- `schools` é CRUD mínimo: nome + dados de contato da escola + dono.
+- `accounts` aproveita o `django_base_kit` (que já entrega signup/login/logout/reset). Sprint adiciona **só**: nada (é app marcador nesta sprint).
+- `schools` é CRUD mínimo: nome + dados de contato da escola. **Eu (admin) crio a escola via admin Django e vinculo ao user**. User não cria.
 - **Não tem multi-tenant**. Cada user tem 1 escola, é o dono total.
 - **Não tem multi-user por escola** nesta sprint.
-- Admin do Django liberado para `accounts.User` e `schools.School` (a próxima sprint refina isso).
+- **Abordagem híbrida pra escopo de escola**:
+  - **Middleware** carrega `request.school` em toda request autenticada, depois do `AuthenticationMiddleware`.
+  - **Mixin** `SchoolScopedQuerysetMixin` filtra querysets de models filhos de `School` por `owner=request.user`. Views que listam coisas usam o mixin.
+  - Views que só leem `request.school.X` (nome, CNPJ, etc.) confiam no middleware.
+  - Views públicas (`/health/`, login, signup, reset) **não passam pelo middleware** (são isentas por path).
 
 ## 2. Estrutura de diretórios
 
@@ -32,13 +36,16 @@ smartscheduler/
 │  ├─ admin.py
 │  ├─ apps.py
 │  ├─ forms.py
+│  ├─ middleware.py             # NOVO — SchoolMiddleware
+│  ├─ mixins.py                 # NOVO — SchoolScopedQuerysetMixin
 │  ├─ models.py
-│  ├─ signals.py
 │  ├─ tests/                    # NOVO
 │  │  ├─ __init__.py
 │  │  ├─ test_school_model.py
 │  │  ├─ test_school_signals.py
-│  │  └─ test_school_views.py
+│  │  ├─ test_school_views.py
+│  │  ├─ test_school_middleware.py   # NOVO
+│  │  └─ test_school_mixins.py       # NOVO
 │  ├─ urls.py
 │  └─ views.py
 └─ app/
@@ -142,11 +149,73 @@ class School(BaseModel):
 
 > **Decisão 2**: usar `OneToOneField` direto no `owner`, sem `Tenant` abstrato. Alinhado com o PRD (sem multi-tenant).
 
-### 4.2 Signals (`schools/signals.py`)
+### 4.2 Middleware (`schools/middleware.py`)
 
-**Sem signals nesta sprint.** A criação de `School` é feita explicitamente quando o user clica em "Criar escola". Sprint 03+ pode adicionar auto-create no signup se virar requisito.
+**Escolha de design**: middleware roda **depois** de `AuthenticationMiddleware`, **antes** de qualquer view. Em toda request:
 
-### 4.3 Forms (`schools/forms.py`)
+1. Se `request.user` é anônimo → `request.school = None`, segue.
+2. Se path é público (`/health/`, `/admin/`, `/accounts/login/`, `/accounts/signup/`, `/accounts/logout/`, `/reset_password/*`) → `request.school = None`, segue (não precisa de escola).
+3. Senão, `request.school = request.user.school` (ou `None` se user não tem escola).
+4. Se a view requer escola (definida por atributo `requires_school = True` na view ou por path) **e** `request.school is None` → raise 404 (ou redireciona pra "criar escola" — Sprint futura).
+
+```python
+from django.conf import settings
+from django.utils.deprecation import MiddlewareMixin
+
+
+PUBLIC_PATH_PREFIXES = (
+    "/health/",
+    "/admin/",
+    "/static/",
+    "/media/",
+    "/accounts/login/",
+    "/accounts/logout/",
+    "/accounts/signup/",
+    "/reset_password/",
+)
+
+
+class SchoolMiddleware(MiddlewareMixin):
+    """
+    Carrega request.school para toda request autenticada.
+    Views públicas (login, signup, health, admin) não recebem request.school.
+    """
+
+    def process_request(self, request):
+        request.school = None
+        if not request.user.is_authenticated:
+            return
+        path = request.path
+        for prefix in PUBLIC_PATH_PREFIXES:
+            if path.startswith(prefix):
+                return
+        # Tenta pegar a escola do user. Pode não existir (admin sem escola).
+        request.school = getattr(request.user, "school", None)
+```
+
+> **Decisão**: middleware **não força** que toda view tenha escola. Views que precisam **declaram** (ou via atributo na view, ou via path — Sprint futura). Se a view não declara, `request.school` pode ser `None` sem erro.
+
+> **Decisão 2**: order em `MIDDLEWARE` = **depois** de `AuthenticationMiddleware`, **antes** de qualquer coisa que leia `request.school`. Lista concreta em §5.
+
+### 4.3 Mixin (`schools/mixins.py`)
+
+```python
+class SchoolScopedQuerysetMixin:
+    """
+    Filtra o queryset da view por owner=request.user.
+    Use em DetailView/ListView/UpdateView/DeleteView de models filhos de School.
+    """
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if not self.request.user.is_authenticated:
+            return qs.none()
+        return qs.filter(owner=self.request.user)
+```
+
+> **Por que mixin e não middleware**: o mixin é **opt-in** (só quem herda usa). Middleware seria forçado em todas as views, e views que listam coisas de fora (admin, API) iam quebrar.
+
+### 4.4 Forms (`schools/forms.py`)
 
 ```python
 from django import forms
@@ -167,51 +236,45 @@ class SchoolForm(forms.ModelForm):
         }
 ```
 
-### 4.4 Views (`schools/views.py`)
+### 4.5 Views (`schools/views.py`)
 
 ```python
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, DetailView, UpdateView
+from django.views.generic import DetailView, UpdateView
 
 from .forms import SchoolForm
+from .mixins import SchoolScopedQuerysetMixin
 from .models import School
 
 
-class SchoolCreateView(LoginRequiredMixin, CreateView):
-    model = School
-    form_class = SchoolForm
-    template_name = "schools/school_form.html"
-    success_url = reverse_lazy("schools:detail")
-
-    def form_valid(self, form):
-        form.instance.owner = self.request.user
-        return super().form_valid(form)
-
-
-class SchoolDetailView(LoginRequiredMixin, DetailView):
+class SchoolDetailView(
+    LoginRequiredMixin, SchoolScopedQuerysetMixin, DetailView
+):
     model = School
     template_name = "schools/school_detail.html"
-
-    def get_queryset(self):
-        return School.objects.filter(owner=self.request.user)
+    context_object_name = "school"
 
 
-class SchoolUpdateView(LoginRequiredMixin, UpdateView):
+class SchoolUpdateView(
+    LoginRequiredMixin, SchoolScopedQuerysetMixin, UpdateView
+):
     model = School
     form_class = SchoolForm
     template_name = "schools/school_form.html"
-
-    def get_queryset(self):
-        return School.objects.filter(owner=self.request.user)
+    context_object_name = "school"
 
     def get_success_url(self):
         return self.object.get_absolute_url()
 ```
 
-> **Decisão**: `LoginRequiredMixin` em **toda** view. `get_queryset` filtra por `owner=request.user` (user não vê escola dos outros, mesmo se adivinhar o ID — não há "outros" sem multi-tenant, mas a checagem é obrigatória por segurança).
+> **Decisão**: **removido `SchoolCreateView`**. Quem cria a escola sou **eu** (admin Django). User não tem acesso a `/schools/new/`. Se ele tentar acessar direto, o mixin retorna 404.
 
-### 4.5 URLs (`schools/urls.py`)
+> **Decisão 2**: views de `schools` **confiam no middleware** pra carregar `request.school`. Não fazem `get_queryset().filter(owner=)` direto — o mixin faz. `request.school` é usado pra mostrar nome/CNPJ/etc. no template.
+
+> **Decisão 3**: detalhe e update escopam por owner. Se o user logado não é dono da escola no URL, mixin retorna 404.
+
+### 4.6 URLs (`schools/urls.py`)
 
 ```python
 from django.urls import path
@@ -221,7 +284,8 @@ from . import views
 app_name = "schools"
 
 urlpatterns = [
-    path("new/", views.SchoolCreateView.as_view(), name="create"),
+    # raiz: redireciona pra /schools/<uuid-do-user>/
+    # (resolvido no Sprint 03 com um redirect view)
     path("<uuid:pk>/", views.SchoolDetailView.as_view(), name="detail"),
     path("<uuid:pk>/edit/", views.SchoolUpdateView.as_view(), name="update"),
 ]
@@ -229,17 +293,19 @@ urlpatterns = [
 
 `app/urls.py` ganha:
 ```python
-path("", include("schools.urls", namespace="schools")),
+path("schools/", include("schools.urls", namespace="schools")),
 ```
 
-### 4.6 Templates
+> **Decisão**: `path("")` em `schools.urls` (raiz) **fica pra Sprint 03** — vai virar um redirect que detecta `request.school` (via middleware) e redireciona pra `/schools/<uuid>/`. Mantém a sprint 2 enxuta.
 
-- `templates/schools/school_form.html` — form genérico de create/update
-- `templates/schools/school_detail.html` — mostra os dados da escola + link "Editar"
+### 4.7 Templates
+
+- `templates/schools/school_form.html` — form genérico de update
+- `templates/schools/school_detail.html` — mostra `{{ school.name }}`, CNPJ, telefone, email, endereço + link "Editar"
 
 Mínimo: 1 arquivo por template, sem herança complexa (sem `base.html` nesta sprint — Sprint 03 ou 04 traz layout base do `django_base_kit`).
 
-### 4.7 Admin (`schools/admin.py`)
+### 4.8 Admin (`schools/admin.py`)
 
 ```python
 from django.contrib import admin
@@ -256,7 +322,9 @@ class SchoolAdmin(admin.ModelAdmin):
     raw_id_fields = ("owner",)
 ```
 
-### 4.8 Testes
+> **Decisão**: admin é onde **eu crio a escola do user**. User não vê nem chega ao admin (não é superuser). O fluxo é: admin Django → cria user → cria School vinculado a esse user → user loga e tem `request.school`.
+
+### 4.9 Testes
 
 **`test_school_model.py`** (2 testes):
 - `test_school_str_returns_name`
@@ -265,15 +333,26 @@ class SchoolAdmin(admin.ModelAdmin):
 **`test_school_signals.py`** (1 teste):
 - `test_school_inherits_basemodel_fields` (verifica UUID + created_at + updated_at + active)
 
-**`test_school_views.py`** (4 testes):
-- `test_create_view_assigns_owner_to_logged_user`
-- `test_create_view_redirects_to_detail`
-- `test_detail_view_filters_by_owner` (outro user não vê)
+**`test_school_views.py`** (3 testes):
+- `test_detail_view_requires_login`
+- `test_detail_view_filters_by_owner` (outro user recebe 404)
 - `test_update_view_filters_by_owner`
 
-**Total**: 7 testes.
+**`test_school_middleware.py`** (4 testes):
+- `test_middleware_sets_school_for_authenticated_user_with_school`
+- `test_middleware_sets_school_none_for_user_without_school`
+- `test_middleware_skips_anon_user`
+- `test_middleware_skips_public_paths` (`/health/`, `/admin/`, `/accounts/login/`)
+
+**`test_school_mixins.py`** (2 testes):
+- `test_mixin_filters_queryset_by_owner`
+- `test_mixin_returns_empty_for_anon_user`
+
+**Total**: 12 testes.
 
 ## 5. Configuração (`app/settings.py`)
+
+### 5.1 INSTALLED_APPS
 
 ```python
 INSTALLED_APPS = [
@@ -288,6 +367,26 @@ INSTALLED_APPS = [
 
 `AUTH_USER_MODEL` continua `"base_kit.User"` (já configurado na Sprint 01).
 
+### 5.2 MIDDLEWARE (ordem importa!)
+
+```python
+MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",  # ← request.user existe aqui
+    "schools.middleware.SchoolMiddleware",                     # ← request.school existe aqui
+    "auditlog.middleware.AuditlogMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django_htmx.middleware.HtmxMiddleware",
+]
+```
+
+> **Ordem crítica**: `SchoolMiddleware` vem **depois** de `AuthenticationMiddleware` (precisa de `request.user`) e **antes** de qualquer coisa que leia `request.school`. No momento nenhum outro middleware lê, mas Sprint 03+ vai.
+
 ## 6. Critérios de aceite
 
 - [ ] `docker compose up --build` sobe sem erros
@@ -295,20 +394,22 @@ INSTALLED_APPS = [
 - [ ] `python manage.py makemigrations` gera migrations para `schools` (e só `schools`)
 - [ ] `python manage.py migrate` aplica tudo
 - [ ] `ruff check .` passa
-- [ ] `pytest` passa (2 testes de `accounts` + 7 de `schools` = 9 novos testes verdes)
+- [ ] `pytest` passa (2 testes de `accounts` + 12 de `schools` = 14 novos testes verdes)
 - [ ] `curl http://localhost:8000/health/` retorna `{"status": "ok"}`
-- [ ] `/schools/new/` (autenticado) cria escola e vincula ao `request.user`
-- [ ] `/schools/new/` (não autenticado) redireciona para `/accounts/login/?next=/schools/new/`
-- [ ] `/schools/<uuid>/` (dono) mostra escola
+- [ ] Admin Django cria `User` e `School` vinculado
+- [ ] User comum **não** tem acesso a `/admin/` (não é superuser)
+- [ ] User comum **não** tem acesso a `/schools/new/` (rota não existe)
+- [ ] `/schools/<uuid>/` (dono autenticado) mostra escola
 - [ ] `/schools/<uuid>/` (outro user) retorna 404
-- [ ] Admin Django mostra `Schools` e `User` (do `base_kit`)
+- [ ] `/schools/<uuid>/` (não autenticado) redireciona para login
+- [ ] `/accounts/login/`, `/accounts/signup/`, `/health/`, `/admin/` **não** setam `request.school` (middleware isenta)
+- [ ] `request.school` está setado em qualquer view autenticada (testado via request factory)
 - [ ] Reset de senha continua funcionando (templates `django_base_kit`)
 
 ## 7. Fora de escopo desta sprint
 
 - Layout base / tema visual (Sprint 03 ou 04)
-- Wizard de criação de escola (próxima sprint pode virar wizard, mas o create simples já basta)
-- Auto-create de `School` no signup via signal
+- Auto-create de `School` no signup (user não cria escola — admin cria)
 - Multi-user por escola
 - `Unit`, `Series`, `ClassGroup`, `Subject`, `Teacher` (Sprint 03+)
 - `WorkloadItem` / grade horária (sprints seguintes)
@@ -319,10 +420,16 @@ INSTALLED_APPS = [
 - `Account` abstraction (temos `User` direto)
 - Permissões granulares (apenas dono acessa, sem papéis nesta sprint)
 - API REST (sprint futura, se necessário)
+- Redirect na raiz `/schools/` → `/schools/<uuid>/` (Sprint 03)
+- Forçar view a exigir escola via atributo `requires_school` (Sprint 03+, quando models filhos existirem)
+- Tela de "user sem escola" / wizard de criar escola (não existe, admin sempre cria)
 
 ## 8. Notas
 
 - **Não** criar `accounts/models.py` com model custom. `User` é do `base_kit`. App `accounts` é um **marcador** para extensões futuras de auth.
-- **Não** criar `tenant.py`, `middleware.py`, ou qualquer abstração de multi-tenant. Repetindo: sem multi-tenant.
+- **Não** criar `tenant.py`, `middleware.py` de tenant, ou qualquer abstração de multi-tenant. Repetindo: sem multi-tenant.
 - **Não** adicionar `school_id` como FK em outros models nesta sprint. `School` ainda não tem filhos. Sprint 03+ faz isso pra `Unit`, `Series`, etc.
 - A herança de `BaseModel` já dá auditlog automático. Não registrar `School` em `auditlog.register` separadamente (audita via herança).
+- **Middleware não força** que toda view tenha escola. Se a view não precisa, `request.school` pode ser `None` sem erro. Sprint 03+ adiciona o atributo `requires_school` quando models filhos de `School` começarem a aparecer.
+- **Mixin é opt-in**: views que listam coisas de fora (admin, API) NÃO herdam o mixin. Só views de usuário final escopam.
+- **Fluxo de criação de escola**: admin Django (`/admin/`) → cria `User` → cria `School` vinculado a esse user → user loga → `request.school` aparece via middleware.
