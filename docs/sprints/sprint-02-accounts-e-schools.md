@@ -6,7 +6,7 @@
 ## 1. Princípios desta sprint
 
 - **Sem over-engineering**. Só o que precisa existir pra próxima sprint (Sprint 03 — unidades, séries, turmas) ter onde morar.
-- `accounts` aproveita o `django_base_kit` (que já entrega signup/login/logout/reset). Sprint adiciona **só**: nada (é app marcador nesta sprint).
+- `accounts` aproveita o `django_base_kit` (que já entrega signup/login/logout/reset). Sprint adiciona **só**: nada (é app marcador nesta sprint). **Sem signup** — user é criado pelo admin Django. Login + reset de senha continuam funcionando.
 - `schools` é CRUD mínimo: nome + dados de contato da escola. **Eu (admin) crio a escola via admin Django e vinculo ao user**. User não cria.
 - **Não tem multi-tenant**. Cada user tem 1 escola, é o dono total.
 - **Não tem multi-user por escola** nesta sprint.
@@ -14,7 +14,8 @@
   - **Middleware** carrega `request.school` em toda request autenticada, depois do `AuthenticationMiddleware`.
   - **Mixin** `SchoolScopedQuerysetMixin` filtra querysets de models filhos de `School` por `owner=request.user`. Views que listam coisas usam o mixin.
   - Views que só leem `request.school.X` (nome, CNPJ, etc.) confiam no middleware.
-  - Views públicas (`/health/`, login, signup, reset) **não passam pelo middleware** (são isentas por path).
+  - Views públicas (`/health/`, login, reset) **não passam pelo middleware** (são isentas por path).
+- **`base.html` criado nesta sprint**. Templates de `schools` herdam dele. Layout mínimo e limpo — sem tema visual rebuscado (Sprint futura).
 
 ## 2. Estrutura de diretórios
 
@@ -50,15 +51,27 @@ smartscheduler/
 │  └─ views.py
 └─ app/
    └─ settings.py               # edita: INSTALLED_APPS, AUTH_USER_MODEL
+└─ templates/                   # já existe (Sprint 01), ganha arquivos
+   ├─ base.html                 # NOVO — layout base
+   ├─ partials/                 # NOVO
+   │  └─ _messages.html         # NOVO — flash messages
+   └─ schools/                  # NOVO
+      ├─ school_form.html       # NOVO — herda de base.html
+      ├─ school_detail.html     # NOVO — herda de base.html
+      └─ no_school.html         # NOVO — standalone, sem base.html
 ```
 
 ## 3. App `accounts`
 
 ### 3.1 Responsabilidade
 
-- Centralizar URLs de auth customizadas (caso a UI do `django_base_kit` precise de ajuste de layout).
-- Garantir que **após signup, o user é redirecionado pro wizard de criar escola** (próxima sprint faz o wizard; por ora, redireciona pra `/schools/new/` que já funciona com `SchoolCreateView`).
-- Garantir que **reset de senha funciona ponta-a-ponta** (email + link + form de nova senha), com templates próprios.
+- **Nenhuma** nesta sprint. `accounts/` é um **marcador** para extensões futuras de auth (ex: convite de professor, social login).
+- Auth atual vem 100% do `django_base_kit`:
+  - Login: `/accounts/login/` (template `base_kit` + `BASE_KIT` settings)
+  - Logout: `/accounts/logout/`
+  - Reset de senha: `/reset_password/`, `/reset_password/done`, `/reset_password/confirm/<uidb64>/<token>/`, `/reset_password/complete/`
+  - **Signup: NÃO EXISTE.** User é criado pelo admin Django (você). Se um user anônimo tentar `/accounts/signup/`, vê 404 (rota não existe).
+- `app/urls.py` inclui `user_urlpatterns` do `django_base_kit` (que já tem login, logout, **signup**, reset). **Customizar** pra remover o signup das URLs (ver §3.5).
 
 ### 3.2 Models
 
@@ -66,41 +79,72 @@ smartscheduler/
 
 ### 3.3 Views
 
-- `views.py` herda do `django_base_kit` quando possível. Se não precisar customizar, não criar.
-- Único ajuste garantido: `LoginView` redireciona pra `/` (e lá vê se o user tem escola — se não, não deixa fazer nada enquanto o admin do sistema não criar a escola do user).
+**Nenhuma.** Não criar.
 
 ### 3.4 Forms
 
-- `forms.py` herda `base_kit.forms.SignUpForm` e `base_kit.forms.UserLoginForm`.
-- Nenhum campo customizado nesta sprint.
+**Nenhum.** Não criar.
 
-### 3.5 URLs (`accounts/urls.py`)
+### 3.5 URLs
+
+**Não criar `accounts/urls.py`.** A integração fica toda em `app/urls.py`:
 
 ```python
-from django.urls import path
+# app/urls.py
+from django.urls import include, path
+from django.contrib import admin
+from django_base_kit.urls import user_urlpatterns
 
 from . import views
 
-app_name = "accounts"
+# Remover signup do base_kit: filtrar user_urlpatterns
+auth_urlpatterns = [p for p in user_urlpatterns if p.name != "signup"]
 
 urlpatterns = [
-    # Herda do django_base_kit.urls.user_urlpatterns
-    # (mantemos a URL /accounts/login/ via app.urls include)
-]
+    path("health/", views.health, name="health"),
+    path("admin/", admin.site.urls),
+    path("", include("schools.urls", namespace="schools")),  # raiz = SchoolRedirectView
+] + auth_urlpatterns
 ```
 
-> **Decisão**: como o `django_base_kit` já entrega `user_urlpatterns` com `/accounts/login/`, `/accounts/logout/`, `/accounts/signup/`, etc., **a `app/urls.py` continua incluindo `user_urlpatterns` direto**. Não criamos `accounts/urls.py` nesta sprint. O app `accounts` existe pra **sprints futuras** que precisem estender auth (ex: convidar professor, social login).
+> **Decisão**: a raiz `/` é resolvida por `schools.urls` (`path("")` = `SchoolRedirectView`). Se você não logou, `LoginRequiredMixin` redireciona pro login. Após login, `LOGIN_REDIRECT_URL` é `"/"`, que cai no `SchoolRedirectView`:
+>
+> - Se logou com escola → vai pra `/schools/<uuid>/` (bom).
+> - Se logou sem escola (admin ainda não criou) → ver §4.6: a view renderiza o template `schools/no_school.html` em vez de redirecionar, evitando loop.
+>
+> **Como evitar o loop**: a `SchoolRedirectView` tem que diferenciar "sem escola" de "loop". Solução simples — se `request.school is None`, **renderiza um template** `"schools/no_school.html"` com mensagem "Sua escola ainda não foi cadastrada. Fale com o administrador." em vez de tentar redirecionar:
+>
+> ```python
+> class SchoolRedirectView(LoginRequiredMixin, View):
+>     """
+>     /  →  /schools/<uuid>/  (se tem escola)
+>        →  schools/no_school.html  (se logado mas sem escola)
+>     """
+>
+>     def get(self, request, *args, **kwargs):
+>         if request.school is None:
+>             return render(
+>                 request, "schools/no_school.html", status=200,
+>             )
+>         return redirect(
+>             "schools:detail", pk=request.school.pk,
+>         )
+> ```
+>
+> - Não autenticado → `LoginRequiredMixin` redireciona pro login (sem loop, porque login != `/`).
+> - Autenticado com escola → 302 pra `/schools/<uuid>/`.
+> - Autenticado sem escola → 200 com template (sem loop).
 
-**Resultado**: `accounts/` vira só um app marcador com `__init__.py` + `apps.py` + `tests/__init__.py` + `admin.py` (registra `User` do `base_kit`). **Sem models, sem views, sem forms nesta sprint.**
+> **Decisão 2**: o `django_base_kit.urls.user_urlpatterns` traz login, logout, **signup** e reset. Como não há signup, **filtramos** o `user_urlpatterns` removendo o `path` com `name="signup"`. Login, logout e reset continuam.
 
 ### 3.6 Admin
 
-- Registra `base_kit.User` com `UserAdmin` padrão do Django (suficiente — próxima sprint customiza se precisar).
+- Registra `base_kit.User` com `UserAdmin` padrão do Django. O admin é onde **você cria o user**.
 
 ### 3.7 Testes
 
-- 1 teste: `test_signup_creates_user_with_email_unique` — confirma que `SignUpForm` cria user com email único (validação do `base_kit`).
-- 1 teste: `test_login_redirects_to_home` — confirma que login redireciona pra `/`.
+- 1 teste: `test_user_admin_creates_user_with_email_unique` — confirma que criar user via admin grava email único (validação do `base_kit`).
+- 1 teste: `test_signup_url_does_not_exist` — confirma que `/accounts/signup/` retorna 404 (rota foi removida).
 - Total: 2 testes.
 
 ## 4. App `schools`
@@ -177,7 +221,7 @@ PUBLIC_PATH_PREFIXES = (
 class SchoolMiddleware(MiddlewareMixin):
     """
     Carrega request.school para toda request autenticada.
-    Views públicas (login, signup, health, admin) não recebem request.school.
+    Views públicas (login, health, admin) não recebem request.school.
     """
 
     def process_request(self, request):
@@ -284,26 +328,96 @@ app_name = "schools"
 
 urlpatterns = [
     # raiz: redireciona pra /schools/<uuid-do-user>/
-    # (resolvido no Sprint 03 com um redirect view)
+    path("", views.SchoolRedirectView.as_view(), name="redirect"),
     path("<uuid:pk>/", views.SchoolDetailView.as_view(), name="detail"),
     path("<uuid:pk>/edit/", views.SchoolUpdateView.as_view(), name="update"),
 ]
 ```
 
-`app/urls.py` ganha:
+`app/urls.py` (ver §3.5) tem:
 ```python
-path("schools/", include("schools.urls", namespace="schools")),
+path("", include("schools.urls", namespace="schools")),
 ```
 
-> **Decisão**: `path("")` em `schools.urls` (raiz) **fica pra Sprint 03** — vai virar um redirect que detecta `request.school` (via middleware) e redireciona pra `/schools/<uuid>/`. Mantém a sprint 2 enxuta.
-(Pode trazer isso aqui para essa sprint)
+E a view `SchoolRedirectView`:
+
+```python
+# schools/views.py
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import redirect, render
+from django.views.generic import View
+
+
+class SchoolRedirectView(LoginRequiredMixin, View):
+    """
+    /  →  /schools/<uuid>/  (se tem escola)
+       →  schools/no_school.html  (se logado mas sem escola)
+    """
+
+    def get(self, request, *args, **kwargs):
+        if request.school is None:
+            return render(
+                request, "schools/no_school.html", status=200,
+            )
+        return redirect(
+            "schools:detail", pk=request.school.pk,
+        )
+```
+
+> **Decisão**: o `SchoolRedirectView` é uma `View` crua, não `RedirectView`, pra **renderizar template** no caso de "sem escola" (sem loop). `RedirectView` só redireciona — não tem como renderizar HTML.
+
+> **Decisão 2**: o template `schools/no_school.html` é o único template desta sprint que **não** herda de `base.html` (é uma página de erro, não tem header com nome de escola). Futuras sprints podem padronizar.
 
 ### 4.7 Templates
 
-- `templates/schools/school_form.html` — form genérico de update
-- `templates/schools/school_detail.html` — mostra `{{ school.name }}`, CNPJ, telefone, email, endereço + link "Editar"
+**`base.html` + partials:**
 
-Mínimo: 1 arquivo por template, sem herança complexa (sem `base.html` nesta sprint — Sprint 03 ou 04 traz layout base do `django_base_kit`).
+- `templates/base.html` — layout base: `<!doctype html>`, `<head>` com `{% block title %}`, body com header (nome da escola via `{{ request.school.name }}` se houver), main `{% block content %}`, footer mínimo. Carrega `partials/_messages.html`.
+- `templates/partials/_messages.html` — renderiza `{% for message in messages %}` com classes Bootstrap-like (`success`, `error`, `info`, `warning`).
+
+**`schools/` templates (herdam de base.html):**
+
+- `templates/schools/school_form.html` — `{% extends "base.html" %}{% block content %}` com form genérico de update
+- `templates/schools/school_detail.html` — `{% extends "base.html" %}{% block content %}` mostra `{{ school.name }}`, CNPJ, telefone, email, endereço + link "Editar" (só aparece se `request.school.pk == school.pk`)
+- `templates/schools/no_school.html` — **não** herda de `base.html` (página de erro standalone, sem header com nome de escola). Mostra mensagem "Sua escola ainda não foi cadastrada. Fale com o administrador do sistema."
+
+**`accounts/` (futuro):**
+
+- Não cria template próprio nesta sprint. Login, logout, reset de senha continuam usando templates do `django_base_kit`.
+
+**`base.html` exemplo (mínimo, sem tema):**
+
+```html
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}Grade Certa{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <header>
+    <a href="{% url 'schools:redirect' %}">Grade Certa</a>
+    {% if request.school %}
+      <span>{{ request.school.name }}</span>
+    {% endif %}
+    {% if user.is_authenticated %}
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit">Sair</button>
+      </form>
+    {% endif %}
+  </header>
+  <main>
+    {% include "partials/_messages.html" %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
+```
+
+> **Decisão**: sem CSS framework nesta sprint (Bootstrap, Tailwind, etc). Só HTML cru. Sprint futura traz tema visual. O header mostra o nome da escola via middleware e o botão de logout via CSRF.
 
 ### 4.8 Admin (`schools/admin.py`)
 
@@ -333,10 +447,12 @@ class SchoolAdmin(admin.ModelAdmin):
 **`test_school_signals.py`** (1 teste):
 - `test_school_inherits_basemodel_fields` (verifica UUID + created_at + updated_at + active)
 
-**`test_school_views.py`** (3 testes):
+**`test_school_views.py`** (5 testes):
 - `test_detail_view_requires_login`
 - `test_detail_view_filters_by_owner` (outro user recebe 404)
 - `test_update_view_filters_by_owner`
+- `test_redirect_view_redirects_to_school_detail` (user com escola → /schools/<uuid>/)
+- `test_redirect_view_renders_no_school_template` (user sem escola → 200 com `schools/no_school.html`)
 
 **`test_school_middleware.py`** (4 testes):
 - `test_middleware_sets_school_for_authenticated_user_with_school`
@@ -348,7 +464,7 @@ class SchoolAdmin(admin.ModelAdmin):
 - `test_mixin_filters_queryset_by_owner`
 - `test_mixin_returns_empty_for_anon_user`
 
-**Total**: 12 testes.
+**Total**: 14 testes.
 
 ## 5. Configuração (`app/settings.py`)
 
@@ -394,7 +510,7 @@ MIDDLEWARE = [
 - [ ] `python manage.py makemigrations` gera migrations para `schools` (e só `schools`)
 - [ ] `python manage.py migrate` aplica tudo
 - [ ] `ruff check .` passa
-- [ ] `pytest` passa (2 testes de `accounts` + 12 de `schools` = 14 novos testes verdes)
+- [ ] `pytest` passa (2 testes de `accounts` + 14 de `schools` = 16 novos testes verdes)
 - [ ] `curl http://localhost:8000/health/` retorna `{"status": "ok"}`
 - [ ] Admin Django cria `User` e `School` vinculado
 - [ ] User comum **não** tem acesso a `/admin/` (não é superuser)
@@ -402,13 +518,15 @@ MIDDLEWARE = [
 - [ ] `/schools/<uuid>/` (dono autenticado) mostra escola
 - [ ] `/schools/<uuid>/` (outro user) retorna 404
 - [ ] `/schools/<uuid>/` (não autenticado) redireciona para login
-- [ ] `/accounts/login/`, `/accounts/signup/`, `/health/`, `/admin/` **não** setam `request.school` (middleware isenta)
+- [ ] `/accounts/login/`, `/health/`, `/admin/` **não** setam `request.school` (middleware isenta)
+- [ ] `/accounts/signup/` retorna 404 (rota removida)
+- [ ] `/` (raiz) redireciona pra `/schools/<uuid>/` (se user tem escola) ou pro login (se não tem)
+- [ ] `templates/base.html` existe e todos os templates de `schools` herdam dele
 - [ ] `request.school` está setado em qualquer view autenticada (testado via request factory)
 - [ ] Reset de senha continua funcionando (templates `django_base_kit`)
 
 ## 7. Fora de escopo desta sprint
 
-- Layout base / tema visual (Sprint 03 ou 04)
 - Auto-create de `School` no signup (user não cria escola — admin cria)
 - Multi-user por escola
 - `Unit`, `Series`, `ClassGroup`, `Subject`, `Teacher` (Sprint 03+)
@@ -420,9 +538,9 @@ MIDDLEWARE = [
 - `Account` abstraction (temos `User` direto)
 - Permissões granulares (apenas dono acessa, sem papéis nesta sprint)
 - API REST (sprint futura, se necessário)
-- Redirect na raiz `/schools/` → `/schools/<uuid>/` (Sprint 03)
 - Forçar view a exigir escola via atributo `requires_school` (Sprint 03+, quando models filhos existirem)
 - Tela de "user sem escola" / wizard de criar escola (não existe, admin sempre cria)
+- Tema visual / CSS framework (Sprint futura)
 
 ## 8. Notas
 
@@ -432,4 +550,4 @@ MIDDLEWARE = [
 - A herança de `BaseModel` já dá auditlog automático. Não registrar `School` em `auditlog.register` separadamente (audita via herança).
 - **Middleware não força** que toda view tenha escola. Se a view não precisa, `request.school` pode ser `None` sem erro. Sprint 03+ adiciona o atributo `requires_school` quando models filhos de `School` começarem a aparecer.
 - **Mixin é opt-in**: views que listam coisas de fora (admin, API) NÃO herdam o mixin. Só views de usuário final escopam.
-- **Fluxo de criação de escola**: admin Django (`/admin/`) → cria `User` → cria `School` vinculado a esse user → user loga → `request.school` aparece via middleware.
+- **Fluxo de criação**: admin Django (`/admin/`) → cria `User` (sem signup público) → cria `School` vinculado a esse user → user loga → `request.school` aparece via middleware → raiz `/` redireciona pra `/schools/<uuid>/`.
