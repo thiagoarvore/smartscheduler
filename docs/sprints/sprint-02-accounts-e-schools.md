@@ -67,7 +67,7 @@ smartscheduler/
 ### 3.3 Views
 
 - `views.py` herda do `django_base_kit` quando possível. Se não precisar customizar, não criar.
-- Único ajuste garantido: `LoginView` redireciona pra `/` (e lá vê se o user tem escola — se não, sugere criar).
+- Único ajuste garantido: `LoginView` redireciona pra `/` (e lá vê se o user tem escola — se não, não deixa fazer nada enquanto o admin do sistema não criar a escola do user).
 
 ### 3.4 Forms
 
@@ -156,7 +156,7 @@ class School(BaseModel):
 1. Se `request.user` é anônimo → `request.school = None`, segue.
 2. Se path é público (`/health/`, `/admin/`, `/accounts/login/`, `/accounts/signup/`, `/accounts/logout/`, `/reset_password/*`) → `request.school = None`, segue (não precisa de escola).
 3. Senão, `request.school = request.user.school` (ou `None` se user não tem escola).
-4. Se a view requer escola (definida por atributo `requires_school = True` na view ou por path) **e** `request.school is None` → raise 404 (ou redireciona pra "criar escola" — Sprint futura).
+4. Se a view requer escola (definida por atributo `requires_school = True` na view ou por path) **e** `request.school is None` → raise 404.
 
 ```python
 from django.conf import settings
@@ -170,7 +170,6 @@ PUBLIC_PATH_PREFIXES = (
     "/media/",
     "/accounts/login/",
     "/accounts/logout/",
-    "/accounts/signup/",
     "/reset_password/",
 )
 
@@ -297,6 +296,7 @@ path("schools/", include("schools.urls", namespace="schools")),
 ```
 
 > **Decisão**: `path("")` em `schools.urls` (raiz) **fica pra Sprint 03** — vai virar um redirect que detecta `request.school` (via middleware) e redireciona pra `/schools/<uuid>/`. Mantém a sprint 2 enxuta.
+(Pode trazer isso aqui para essa sprint)
 
 ### 4.7 Templates
 
